@@ -1,17 +1,17 @@
-# Metodologia - CIn the Stars
+# Methodology - CIn the Stars
 
-**Dupla Responsável:** José Arthur e Mateus Costa (Ciência de Dados e Machine Learning)
+**Responsible Team:** José Arthur and Mateus Costa (Data Science and Machine Learning)
 
-## 1. Problema Investigado e Variáveis
-O motor de decisão resolve a dificuldade de cruzar dados climáticos reais com necessidades biológicas. Utilizamos dados da **NASA POWER API** (Agregados em janelas de 3 meses para `chuva_safra_3m_mm` e `temp_min_safra_3m_c`) cruzados com uma **Matriz Agronômica** construída via FAO.
+## 1. Investigated Problem and Variables
+The decision engine solves the difficulty of cross-referencing real climate data with biological needs. We used data from the **NASA POWER API** (aggregated into 3-month windows for `chuva_safra_3m_mm` and `temp_min_safra_3m_c`) crossed with an **Agronomic Matrix** built via FAO guidelines.
     
-## 2. Limpeza e Processamento (Pandas)
-As falhas do satélite (-999) foram removidas e interpoladas linearmente via Pandas. A granularidade diária (`DOY`) foi convertida em médias mensais e posteriormente agregada em uma "Janela Sazonal Móvel de 3 meses", refletindo o ciclo real de uma safra.
+## 2. Cleaning and Processing (Pandas)
+Satellite reading errors (-999) were removed and linearly interpolated using Pandas. The daily granularity (`DOY`) was converted into monthly averages and subsequently aggregated into a "3-Month Rolling Seasonal Window", accurately reflecting the actual cycle of a crop season.
 
-## 3. Métodos e Algoritmos Empregados
-Adotamos um sistema determinístico baseado em filtros e pesos (Scoring) para garantir explicabilidade, evitando o efeito "caixa preta" de redes neurais genéricas:
-1.  **Hard Filters (Filtros Biofísicos):** Máscaras booleanas excluem culturas onde a previsão de chuva ou temperatura da NASA está fora dos limiares de tolerância da planta.
-2.  **Scoring de Rotação:** O algoritmo avalia a cultura anterior e aplica bonificações matemáticas para plantas da nova safra que quebram o ciclo de pragas (diferente família botânica) e recuperam o solo (ex: leguminosas fixadoras de nitrogênio).
+## 3. Methods and Algorithms Applied
+We adopted a deterministic system based on filters and weights (Scoring) to ensure explainability, avoiding the "black box" effect of generic neural networks:
+1.  **Hard Filters (Biophysical Filters):** Boolean masks exclude crops whenever the NASA precipitation or temperature forecast falls outside the plant's tolerance thresholds.
+2.  **Rotation Scoring:** The algorithm evaluates the previous crop and applies mathematical bonuses for new season plants that break the pest cycle (different botanical family) and recover the soil (e.g., nitrogen-fixing legumes).
 
-## 4. Limitações
-A classificação de risco hídrico e térmico é baseada em médias históricas e dados espaciais agregados do satélite. O protótipo serve como suporte à decisão macro, não substituindo a análise laboratorial do solo e o monitoramento microclimático da propriedade.
+## 4. Limitations
+The classification of water and thermal risk is based on historical averages and spatially aggregated satellite data. The prototype serves as macro decision support and does not replace laboratory soil analysis and microclimate monitoring of the local property.
