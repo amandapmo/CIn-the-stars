@@ -2,7 +2,7 @@ import pandas as pd
 import json
 
 # ==========================================
-# 1. MATRIZ AGRONÔMICA (Frente 2 - Ciência de Dados)
+# 1. MATRIZ AGRONÔMICA 
 # ==========================================
 dados_culturas = [
     {"cultura": "Feijão Macassar", "exigencia_hidrica": "Média", "fixa_nitrogenio": True, "profundidade_raiz": "Rasa", "ciclo_dias": 75},
@@ -67,7 +67,7 @@ def gerar_recomendacao_mvp(caminho_arquivo, cultura_anterior):
 # ==========================================
 # 3. TESTE DA API 
 # ==========================================
-arquivo_petrolina = "clima_sazonal_petrolina.csv"
+arquivo_petrolina = "dados_ml/data/clima_sazonal_petrolina.csv"
 
 json_para_o_app = gerar_recomendacao_mvp(arquivo_petrolina, cultura_anterior="Milho")
 print(json_para_o_app)
