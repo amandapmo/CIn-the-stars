@@ -1,0 +1,62 @@
+{
+  "checked_at": "2026-11-14T14:20:45.502054-03:00",
+  "training_started": false,
+  "python": "3.14.4",
+  "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+  "pip": "25.3",
+  "torch": "2.11.0+cu128",
+  "torchvision": "0.26.0+cu128",
+  "ultralytics": "8.4.212",
+  "cuda_runtime": "12.8",
+  "cuda_available": true,
+  "cudnn": 91900,
+  "gpu": "NVIDIA GeForce RTX 3050 6GB Laptop GPU",
+  "gpu_memory_bytes": 6441926656,
+  "gpu_compute_capability": [
+    8,
+    6
+  ],
+  "nvidia_driver": "581.86",
+  "device_validation": "CUDA tensor addition and one synthetic 224x224 forward pass under inference_mode; no optimizer or backward pass.",
+  "pretrained_output_shape": [
+    1,
+    1000
+  ],
+  "pretrained_model": {
+    "path": "models/yolov8n-cls.pt",
+    "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n-cls.pt",
+    "sha256": "11fa19f2aea79bc960d680a13f82f22105982b325eb9e17a4a5e1a9f8245980a"
+  },
+  "dataset": "data/plantvillage/processed",
+  "classes_per_split": {
+    "train": 35,
+    "val": 35,
+    "test": 35
+  },
+  "images_per_split": {
+    "train": 33180,
+    "val": 7081,
+    "test": 7060
+  },
+  "prepared_manifest_sha256": "60c3d94884953da60052d739517e1c81362560a93b613d0a96f393cdc7594c05",
+  "requirements_sha256": "ef30277341099eb0a9334921403001639fa97c36eeb70efc9cc73b1249348343",
+  "planned_training": {
+    "epochs": 30,
+    "imgsz": 224,
+    "batch": 32,
+    "workers": 2,
+    "seed": 42,
+    "deterministic": true,
+    "cache": false,
+    "split": "val",
+    "device": 0,
+    "project": "vision/runs",
+    "name": "plantvillage_yolov8n_cls",
+    "optimizer": "auto (Ultralytics default; actual selection not yet measured)"
+  },
+  "limitations": [
+    "Batch 32 has not been tested with backpropagation; no training was authorized.",
+    "CUDA is blocked inside the agent sandbox and was validated outside it.",
+    "13,180 processed images lack matching official leaf metadata; grouping is heuristic."
+  ]
+}
