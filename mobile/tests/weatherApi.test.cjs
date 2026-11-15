@@ -1,6 +1,7 @@
 const { test, afterEach, mock } = require("node:test");
 const assert = require("node:assert/strict");
 const {
+  approximateLocation,
   getWeatherForecast,
   searchWeatherCities,
 } = require("../.expo/weather-tests/services/weatherApi.js");
@@ -38,6 +39,28 @@ function respond(data) {
   );
 }
 afterEach(() => mock.restoreAll());
+
+test("location normalization allowlists fields instead of retaining extra GPS or account metadata", async () => {
+  const extra = {
+    ...location,
+    origin: "gps",
+    accuracy: 12,
+    altitude: 80,
+    heading: 90,
+    speed: 1.2,
+    timestamp: Date.now(),
+    userId: "synthetic-test",
+  };
+  const expected = {
+    label: location.label,
+    origin: "gps",
+    latitude: -8.05,
+    longitude: -34.88,
+  };
+  assert.deepEqual(approximateLocation(extra), expected);
+  respond(fixture());
+  assert.deepEqual((await getWeatherForecast(extra)).location, expected);
+});
 
 test("forecast preserves local calendar dates and missing values, and minimizes the transmitted location", async () => {
   const fetch = respond(fixture());

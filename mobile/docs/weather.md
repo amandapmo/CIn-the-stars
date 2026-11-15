@@ -1,38 +1,46 @@
-# Weather forecast integration
+# Weather, worldwide locations and optional device position
 
-Provider: [Open-Meteo](https://open-meteo.com/en/docs). The public API requires no key and is offered for non-commercial use subject to its [terms](https://open-meteo.com/en/terms). The interface credits Open-Meteo and links to CC BY 4.0. No runtime dependency was added.
+Provider: [Open-Meteo](https://open-meteo.com/en/docs). Public hosted access requires no key for non-commercial use within its [terms](https://open-meteo.com/en/terms). The interface credits Open-Meteo and GeoNames and links to CC BY 4.0. No new runtime dependency is required; device location reuses the existing Expo Location SDK and useAppLocation hook.
 
-## Data flow
+## User-controlled inputs
 
-1. The initial Home makes no weather/geocoding request.
-2. The user opens the municipality picker and sees the external-service notice.
-3. An explicit search submits the typed city/municipality and display options to the worldwide geocoding endpoint. Typing alone makes no request. Up to 20 results display the place, region and country, when available. Users can append an exact country/region qualifier, such as `Paris, França`.
-4. Selecting a result requests 15 daily forecasts using municipal coordinates rounded locally to two decimal places. The weather endpoint does not receive the display name, account identifier, or a property address from this code.
-5. The interface shows dated weather conditions, maximum/minimum temperatures, precipitation probability, query time, and provider attribution. Missing values remain unavailable; failures show a retry action rather than simulated weather.
+- Initial Home rendering makes no location, weather or geocoding request.
+- Manual worldwide search submits a city name only after the user presses Search. Region/country labels distinguish namesakes; up to 20 results and country/region qualifiers are supported. Coverage is the GeoNames gazetteer, not every official municipality.
+- Optional device position starts only after pressing “Usar minha localização aproximada”. The hook checks/reuses foreground permission or requests it when appropriate. It requests the SDK's lowest accuracy, without background permission, watch subscriptions or a settings dialog to improve precision.
+- Denial, unavailable services, stale results and timeouts leave manual selection available. Choosing a municipality ignores any late device result. This does not cancel the native one-shot acquisition itself.
+- Recife remains an explicitly labelled demonstration option.
 
-Recife is available only through an explicitly labelled demonstration action. Each app session can choose another municipality; the header follows that choice. The choice is not stored in an account or persisted across app restarts.
+## Metadata minimization
 
-## Privacy boundaries
+Before assignment to app-owned state, the device result is validated and reduced to rounded latitude/longitude. The weather hook also normalizes all locations through an explicit field allowlist.
 
-- No GPS permission, device geolocation, location SDK, analytics, or location logging was added.
-- The external provider receives the search text and approximate coordinates at the respective endpoints, plus connection metadata such as IP address. Its own retention and processing are governed by its privacy policy; this client does not hide the IP.
-- The provider's free-API privacy policy consulted on November 15, 2026 states that service logs may contain coordinates and are deleted after 90 days. This is distinct from the app's non-persistence. The picker links to the provider policy before searching.
-- Search instructions ask for municipality names rather than personal information or addresses. No requests are made on each keystroke.
-- Municipality selection and forecasts remain in component memory. This integration adds no local database, persistent cache, or account-based location storage.
-- Rounding reduces coordinate precision; it is not a guarantee of anonymization. Real property tracking, persistence, or account linkage would require a separate privacy design and documented legal basis before implementation. These measures alone do not establish LGPD compliance.
+| Field                                                                                  | Treatment                                                                                                                               |
+| -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Latitude and longitude                                                                 | Rounded locally to two decimal places; used only as the selected approximate point                                                      |
+| Device capture timestamp                                                               | Checked locally for freshness (five-minute maximum age and one-minute future-clock tolerance); excluded from state and outgoing queries |
+| Altitude, altitude accuracy, reported accuracy, heading, speed and mock-provider flags | Not copied into app-owned location state or forecast requests                                                                           |
+| Account/device identifiers                                                             | Not added to the weather flow                                                                                                           |
 
-## Scope
+Only rounded coordinates and required forecast options are sent to Open-Meteo. Session state is not persisted. Rounding reduces precision; it is not anonymization or a guarantee of physical positioning accuracy. Accuracy.Lowest is a best-effort acquisition setting.
 
-Based on main commit `578d169`, including Amanda's FastAPI/Google Weather work and the team's current Home/navigation. The existing backend, Google service and team analytical modules are preserved. Open-Meteo forecast/geocoding requests are made directly from this mobile feature using HTTPS, with the external-service notice described above.
+SDK/OS boundaries matter: the inspected Expo Location 58 web implementation caches a raw last-known position temporarily, and operating systems manage their own location data. This integration does not promise erasure of all raw metadata from SDK/OS memory. The app rejects stale returned positions instead of claiming they are fresh.
 
-The forecast strip replaces the illustrative planting timeline in the current Home. The municipality selection also supplies approximate coordinates when the user explicitly requests the existing agricultural analysis. The Home no longer invokes the automatic GPS hook or prints the request payload. The remote placeholder avatar was replaced by a local icon to remove an unnecessary external image request.
+The external provider sees request coordinates/search text and connection metadata such as IP address. Its policy consulted on November 15, 2026 describes logs that may contain coordinates and are deleted after 90 days. This is distinct from the app's session-only state. No additional API key, location logging, analytics or account storage is introduced by this feature. OS permission and a user action do not by themselves establish a lawful basis or complete LGPD compliance.
 
-The forecast is short-term model-based weather information, not a validated planting recommendation, crop-growth model, soil suitability score, or replacement for the NASA historical-data pipeline. The existing recommendation API endpoint and its deployment configuration remain outside this integration's scope; they must be configured appropriately for the intended environment.
+## Forecast and agricultural integration
 
-Validation commands: `npm run typecheck`, `npm run lint`, and `npm run test:weather`. Tests cover response contracts, missing values, units, calendar dates, input validation, cancellation, request minimization, and error handling.
+The selected point requests 15 daily model-based forecasts in metric units with automatic local timezone selection. The UI shows dated conditions, maximum/minimum temperatures, precipitation probability, retrieval time and attribution. Missing values remain unavailable, and errors offer retry rather than simulated weather.
 
-## Worldwide place search and report evidence
+Weather refresh reuses the selected approximate point. A new device position requires another explicit request; the app does not follow movement. The existing agricultural-analysis action also receives only the selected approximate coordinates when explicitly requested. Crop scoring, backend services and navigation are unchanged.
 
-The geocoding endpoint is based on GeoNames and supports worldwide place search, not an exhaustive official register of every municipality. It has no Brazil-only filter. Country names use the requested Portuguese localization when available, falling back to country codes; region/country labels distinguish namesakes. Both GeoNames and Open-Meteo are credited in the interface.
+The agricultural API client accepts EXPO_PUBLIC_API_BASE_URL and otherwise retains its existing development endpoint. Home blocks submission of a device-origin point to agricultural analysis when that endpoint is not HTTPS. Configure an HTTPS backend to enable this path; the forecast remains available independently. Server-side retention and the broader deployment still require separate review; this integration does not certify the whole application's security or legal compliance.
 
-Public city-centre examples for Recife, Paris, Tokyo, Nairobi and Bogotá, plus 15-day forecast responses for Recife and Paris, are saved in `examples/worldwide-weather-demo.json` with query parameters and retrieval timestamps. These are live integration demonstrations, not measured weather observations or agricultural validation. References are recorded in [the project bibliography](../../REFERENCES.md#weather-and-geographic-location-references).
+## Build and verification
+
+Native permission wording is configured in app.json through the Expo Location plugin, with background and foreground-service flags disabled. Permission text changes require a new native binary; Expo Go uses its host permissions.
+
+Run npm run typecheck, npm run lint and npm run test:weather. Tests cover response contracts, allowed fields, coordinate reduction, permission decisions, stale positions, denied/unavailable acquisition, timeout, ignored late results, missing values, dates, units and external request minimization. Browser device-position tests use synthetic coordinates, not a physical phone or private farm.
+
+## Report evidence
+
+Public worldwide search examples and forecast responses are saved in examples/worldwide-weather-demo.json. They are integration demonstrations, not observed farm weather or agricultural validation. References and the device-location data-flow description are recorded in the project REFERENCES.md and METHODOLOGY.md.

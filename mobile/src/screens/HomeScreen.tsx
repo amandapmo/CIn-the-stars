@@ -21,12 +21,21 @@ import WeatherLocationPicker from "../components/home/WeatherLocationPicker";
 
 import { useRecommendation } from "../hooks/useRecommendation";
 import { useWeatherForecast } from "../hooks/useWeatherForecast";
+import { useAppLocation } from "../hooks/useLocation";
+import type { WeatherLocation } from "../types/weather";
 import { RecommendationRequest } from "../api/recommendation";
+import apiClient from "../api/client";
 
 export default function HomeScreen({ navigation }: any) {
   const { fetchRecommendation, loading, data, error } = useRecommendation();
   const { width } = useWindowDimensions();
   const { state: weatherState, load: loadWeather } = useWeatherForecast();
+  const {
+    requestLocation,
+    cancelLocation,
+    errorMsg: locationError,
+    isLoadingLocation,
+  } = useAppLocation();
   const [isLocationPickerVisible, setIsLocationPickerVisible] = useState(false);
   const weatherLocation =
     weatherState.status === "success"
@@ -39,9 +48,41 @@ export default function HomeScreen({ navigation }: any) {
     useState<RecommendationRequest["previous_crop"]>("Corn");
   const [isSheetVisible, setIsSheetVisible] = useState(false);
 
+  function chooseMunicipality() {
+    cancelLocation();
+    setIsLocationPickerVisible(true);
+  }
+
+  function loadSelectedWeather(location: WeatherLocation) {
+    cancelLocation();
+    loadWeather(location);
+  }
+
+  async function loadDeviceWeather() {
+    const position = await requestLocation();
+    if (position)
+      loadWeather({
+        label: "Localização aproximada",
+        origin: "gps",
+        latitude: position.lat,
+        longitude: position.lon,
+      });
+  }
+
   const handleAnalyzeNASA = () => {
     if (!weatherLocation) {
-      setIsLocationPickerVisible(true);
+      chooseMunicipality();
+      return;
+    }
+
+    if (
+      weatherLocation.origin === "gps" &&
+      !/^https:\/\//i.test(apiClient.defaults.baseURL ?? "")
+    ) {
+      Alert.alert(
+        "Conexão segura necessária",
+        "A análise da localização do aparelho requer uma API com HTTPS. Você pode continuar consultando a previsão ou escolher um município.",
+      );
       return;
     }
 
@@ -83,7 +124,7 @@ export default function HomeScreen({ navigation }: any) {
           <TopBar
             location={weatherLocation?.label ?? "Município"}
             cropType={selectedCrop}
-            onLocationPress={() => setIsLocationPickerVisible(true)}
+            onLocationPress={chooseMunicipality}
             onCropPress={() => setIsSheetVisible(true)}
           />
 
@@ -95,12 +136,20 @@ export default function HomeScreen({ navigation }: any) {
             <WeatherTimeline
               width={Math.min(width - 32, 520)}
               state={weatherState}
-              onLoad={loadWeather}
-              onChooseMunicipality={() => setIsLocationPickerVisible(true)}
+              onLoad={loadSelectedWeather}
+              onChooseMunicipality={chooseMunicipality}
+              onUseDeviceLocation={() => {
+                void loadDeviceWeather();
+              }}
+              isLoadingLocation={isLoadingLocation}
+              locationError={locationError}
             />
           </View>
 
-          <ActionCards onAnalyzePress={handleAnalyzeNASA} isLoading={loading} />
+          <ActionCards
+            onAnalyzePress={handleAnalyzeNASA}
+            isLoading={loading || isLoadingLocation}
+          />
         </ScrollView>
 
         <View style={styles.footer}>
@@ -120,7 +169,7 @@ export default function HomeScreen({ navigation }: any) {
         <WeatherLocationPicker
           visible={isLocationPickerVisible}
           onClose={() => setIsLocationPickerVisible(false)}
-          onSelect={loadWeather}
+          onSelect={loadSelectedWeather}
         />
       </SafeAreaView>
     </LinearGradient>

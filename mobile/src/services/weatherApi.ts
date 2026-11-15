@@ -87,7 +87,8 @@ export function approximateLocation(
     throw new WeatherApiError("INPUT", "Localização inválida.");
   }
   return {
-    ...location,
+    label: location.label,
+    origin: location.origin,
     latitude: Math.round(location.latitude * 100) / 100,
     longitude: Math.round(location.longitude * 100) / 100,
   };

@@ -87,11 +87,17 @@ export default function WeatherTimeline({
   state,
   onLoad,
   onChooseMunicipality,
+  onUseDeviceLocation,
+  isLoadingLocation,
+  locationError,
 }: {
   width: number;
   state: WeatherState;
   onLoad: (location: WeatherLocation) => void;
   onChooseMunicipality: () => void;
+  onUseDeviceLocation: () => void;
+  isLoadingLocation: boolean;
+  locationError: string | null;
 }) {
   const { fontScale } = useWindowDimensions();
   const [linkError, setLinkError] = useState("");
@@ -137,11 +143,11 @@ export default function WeatherTimeline({
       {state.status === "idle" && (
         <>
           <Text style={styles.caption}>
-            Escolha seu município para consultar a previsão.
+            Escolha seu município ou use a localização aproximada do aparelho.
           </Text>
           <Text style={styles.privacy}>
-            Sem GPS. A Open-Meteo recebe o município pesquisado, coordenadas
-            aproximadas e o IP da conexão. Sua escolha fica apenas nesta sessão.
+            A Open-Meteo recebe o município pesquisado, coordenadas aproximadas
+            e o IP da conexão. Sua escolha fica apenas nesta sessão do app.
           </Text>
         </>
       )}
@@ -161,13 +167,17 @@ export default function WeatherTimeline({
           <Text accessibilityRole="alert" style={styles.caption}>
             {state.message}
           </Text>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => onLoad(state.location)}
-            style={styles.button}
-          >
-            <Text style={styles.buttonLabel}>Tentar novamente</Text>
-          </Pressable>
+          {state.location && (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                if (state.location) onLoad(state.location);
+              }}
+              style={styles.button}
+            >
+              <Text style={styles.buttonLabel}>Tentar novamente</Text>
+            </Pressable>
+          )}
         </>
       )}
       {state.status === "success" && (
@@ -203,6 +213,39 @@ export default function WeatherTimeline({
             <Text style={styles.link}>Atualizar previsão</Text>
           </Pressable>
         </>
+      )}
+      <Text style={styles.privacy}>
+        A localização do aparelho só é solicitada ao tocar no botão e permitir o
+        acesso. Usamos coordenadas aproximadas, mantidas só nesta sessão do app.
+        A posição só muda quando você solicitar novamente. O provedor informa
+        retenção de registros por até 90 dias.
+      </Text>
+      <Text style={styles.privacy}>
+        Se você pedir a análise agrícola, esse ponto aproximado também será
+        enviado à API do projeto, com conexão HTTPS.
+      </Text>
+      <Pressable
+        accessibilityRole="button"
+        onPress={onUseDeviceLocation}
+        disabled={isLoadingLocation}
+        style={[styles.secondary, isLoadingLocation && { opacity: 0.6 }]}
+      >
+        {isLoadingLocation && (
+          <ActivityIndicator
+            color="#f4d67d"
+            accessibilityLabel="Obtendo localização aproximada"
+          />
+        )}
+        <Text style={styles.link}>
+          {isLoadingLocation
+            ? "Obtendo localização…"
+            : "Usar minha localização aproximada"}
+        </Text>
+      </Pressable>
+      {!!locationError && (
+        <Text accessibilityRole="alert" style={styles.caption}>
+          {locationError}
+        </Text>
       )}
       <Pressable
         accessibilityRole="button"
