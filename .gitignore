@@ -10,4 +10,5 @@
 /vision/**/__pycache__/
 /vision/**/*.pt
 
+.env
 .venv
