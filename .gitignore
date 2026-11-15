@@ -1,0 +1,11 @@
+# Vision datasets, trained models, and training results
+/vision/data/
+/vision/models/
+/vision/runs/
+
+# Local Python environment, caches, configuration, and model weights
+/vision/.venv/
+/vision/.config/
+/vision/.cache/
+/vision/**/__pycache__/
+/vision/**/*.pt

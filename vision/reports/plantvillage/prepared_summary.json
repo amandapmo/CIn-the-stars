@@ -1,0 +1,60 @@
+{
+  "seed": 42,
+  "original_images": 54305,
+  "excluded_classes": {
+    "Blueberry___healthy": 1502,
+    "Raspberry___healthy": 371,
+    "Soybean___healthy": 5090
+  },
+  "excluded_class_images": 6963,
+  "duplicate_images_discarded": 21,
+  "processed_images": 47321,
+  "processed_classes": 35,
+  "target_ratios": {
+    "train": 0.7,
+    "val": 0.15,
+    "test": 0.15
+  },
+  "split_counts": {
+    "train": 33180,
+    "val": 7081,
+    "test": 7060
+  },
+  "effective_ratios": {
+    "train": 0.7011686143572621,
+    "val": 0.14963758162338073,
+    "test": 0.14919380401935717
+  },
+  "grouping_method": "Connected components of class-scoped official leaf IDs, normalized camera names, explicit Leaf numbers, and SHA-256; whole groups assigned by class.",
+  "split_method": "Seeded shuffle, stable largest-group-first ordering, then lowest projected target-relative occupancy.",
+  "leaf_groups": 18969,
+  "official_metadata_images": 34141,
+  "filename_fallback_images": 13180,
+  "metadata": {
+    "url": "https://raw.githubusercontent.com/spMohanty/PlantVillage-Dataset/7f7ecc7e1eaca78107e3affe7cb5abd9427e139a/leaf-map.json",
+    "commit": "7f7ecc7e1eaca78107e3affe7cb5abd9427e139a",
+    "sha256": "3b4b253683c6911744959a3870a92509b1faa1ee34e9f8585e21d0fe6337a25b"
+  },
+  "validation": {
+    "class_count": 35,
+    "excluded_classes_absent": true,
+    "all_copies_accessible_and_sha256_verified": true,
+    "duplicate_hashes_in_processed": 0,
+    "known_leaf_groups_crossing_splits": 0,
+    "metadata_and_filename_evidence_crossing_splits": 0,
+    "copied_file_count_matches_manifest": true,
+    "original_inventory_and_sha256_unchanged": true,
+    "empty_class_splits": [],
+    "yolo_classification_directory_layout": true,
+    "physical_leaf_identity_guaranteed_for_all_images": false
+  },
+  "warnings": [
+    "13180 retained images lack matching official leaf IDs; filename grouping is a heuristic.",
+    "No guarantee of physical leaf independence for images without complete metadata; visual near-duplicates are not detected.",
+    "UUID identifies an image, not necessarily a physical leaf. Numeric camera sequences are not treated as leaf IDs.",
+    "Official leaf IDs are scoped to their class; cross-class physical identity cannot be established from these metadata.",
+    "Apple_Frogeye Spot metadata is mapped to Apple___Black_rot; dataset class names are unchanged.",
+    "Split ratios are approximate because connected leaf groups are indivisible.",
+    "Pixel decoding was performed by the preceding audit; this preparation checks accessibility and byte integrity."
+  ]
+}
