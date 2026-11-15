@@ -1,0 +1,31 @@
+{
+  "classes": 38,
+  "color_images": 54305,
+  "segmented_images": 54306,
+  "healthy_classes": 12,
+  "healthy_images": 15084,
+  "color_problems": {},
+  "segmented_structure_problems": {},
+  "duplicate_groups": 21,
+  "files_in_duplicate_groups": 42,
+  "redundant_duplicate_files": 21,
+  "cross_class_duplicate_groups": 0,
+  "exact_name_differences": 108611,
+  "stem_difference_count": 108611,
+  "normalized_differences": [
+    {
+      "comparison_key": "Grape___Esca_(Black_Measles)/fam_b.msls 4430",
+      "color_count": 0,
+      "segmented_count": 1,
+      "color_paths": "[]",
+      "segmented_paths": "[\"Grape___Esca_(Black_Measles)/7e1fd9b9-1fd9-4f98-93f5-8cf9ebc60dd9___FAM_B.Msls 4430_final_masked.jpg\"]"
+    }
+  ],
+  "normalized_collisions": {
+    "color": 21,
+    "segmented": 21
+  },
+  "scope": "Full decoding and SHA-256: color only. Segmented: structure and filenames only.",
+  "decoder": "ffmpeg",
+  "classification_basis": "class directory label; not a clinical assessment"
+}
