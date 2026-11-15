@@ -1,9 +1,11 @@
-import axios from 'axios';
+import { create } from "axios";
 
-const apiClient = axios.create({
-  baseURL: 'http://172.22.36.53:8000', 
+const apiClient = create({
+  baseURL:
+    process.env.EXPO_PUBLIC_API_BASE_URL?.replace(/\/+$/, "") ||
+    "http://172.22.36.53:8000",
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 

@@ -9,5 +9,8 @@
     "rootDir": "../src",
     "outDir": "../.expo/weather-tests"
   },
-  "include": ["../src/services/weatherApi.ts"]
+  "include": [
+    "../src/services/weatherApi.ts",
+    "../src/services/deviceLocation.ts"
+  ]
 }
