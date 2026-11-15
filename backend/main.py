@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Query
 from pydantic import BaseModel
 
+from services.agent_chat import router as chat_router
 from services.google_weather import (
     WeatherProviderError,
     normalize_current_conditions,
@@ -16,6 +17,7 @@ from services.google_weather import (
 load_dotenv(Path(__file__).with_name(".env"))
 
 app = FastAPI(title="CIn the Stars API")
+app.include_router(chat_router)
 
 
 class CurrentWeatherResponse(BaseModel):
