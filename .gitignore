@@ -9,3 +9,5 @@
 /vision/.cache/
 /vision/**/__pycache__/
 /vision/**/*.pt
+
+.env
