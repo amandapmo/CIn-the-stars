@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   SafeAreaView,
   ScrollView,
@@ -9,18 +9,78 @@ import {
 } from "react-native";
 
 import { scenarios } from "../mocks/recommendationMock";
+import { getCurrentWeather } from "../services/weatherApi";
+import { CurrentWeather } from "../types/weather";
 
 type ScenarioId = "A" | "B";
+type WeatherStatus = "loading" | "ready" | "error";
+type LoadedWeatherState = {
+  location: string;
+  status: "ready";
+  weather: CurrentWeather;
+};
+type FailedWeatherState = {
+  location: string;
+  status: "error";
+};
 
 export default function RotationResultScreen() {
   const [selected, setSelected] = useState<ScenarioId>("A");
+  const [loadedWeather, setLoadedWeather] = useState<
+    LoadedWeatherState | FailedWeatherState | null
+  >(null);
 
   const scenario = scenarios[selected];
+  const location = `${scenario.input.lat},${scenario.input.lon}`;
   const result = scenario.result;
+  const weatherStatus: WeatherStatus =
+    loadedWeather?.location === location ? loadedWeather.status : "loading";
+  const weather =
+    loadedWeather?.location === location && loadedWeather.status === "ready"
+      ? loadedWeather.weather
+      : null;
 
   const isFallow = result.suggested_crop === "NONE (Climatic Fallow)";
 
   const isHighRisk = result.frost_risk === "High";
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let isCurrentRequest = true;
+
+    const timeout = setTimeout(() => {
+      getCurrentWeather(
+        scenario.input.lat,
+        scenario.input.lon,
+        controller.signal,
+      )
+        .then((currentWeather) => {
+          if (isCurrentRequest) {
+            setLoadedWeather({
+              location,
+              status: "ready",
+              weather: currentWeather,
+            });
+          }
+        })
+        .catch(() => {
+          if (isCurrentRequest && !controller.signal.aborted) {
+            setLoadedWeather({ location, status: "error" });
+          }
+        });
+    }, 250);
+
+    return () => {
+      isCurrentRequest = false;
+      clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [location, scenario.input.lat, scenario.input.lon]);
+
+  const formatWeatherValue = (
+    value: number | null | undefined,
+    suffix: string,
+  ) => (value == null ? "Unavailable" : `${value}${suffix}`);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -54,6 +114,55 @@ export default function RotationResultScreen() {
               </Text>
             </Pressable>
           ))}
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Current Weather</Text>
+          {weatherStatus === "loading" && (
+            <Text style={styles.body}>Loading current weather...</Text>
+          )}
+          {weatherStatus === "error" && (
+            <Text style={styles.body}>
+              Current weather is temporarily unavailable. Check your connection
+              and weather service configuration.
+            </Text>
+          )}
+          {weatherStatus === "ready" && weather && (
+            <>
+              <Text style={styles.body}>
+                Temperature: {formatWeatherValue(weather.temperature_c, "°C")}
+              </Text>
+              <Text style={styles.body}>
+                Feels like: {formatWeatherValue(weather.feels_like_c, "°C")}
+              </Text>
+              <Text style={styles.body}>
+                Humidity: {formatWeatherValue(weather.humidity_percent, "%")}
+              </Text>
+              <Text style={styles.body}>
+                Condition: {weather.condition ?? "Unavailable"}
+              </Text>
+              <Text style={styles.body}>
+                Precipitation probability:{" "}
+                {formatWeatherValue(
+                  weather.precipitation_probability_percent,
+                  "%",
+                )}
+              </Text>
+              <Text style={styles.body}>
+                Precipitation (last hour):{" "}
+                {formatWeatherValue(weather.precipitation_mm, " mm")}
+              </Text>
+              <Text style={styles.body}>
+                Wind speed: {formatWeatherValue(weather.wind_speed_kmh, " km/h")}
+              </Text>
+              <Text style={styles.body}>
+                Observed at (UTC): {weather.observed_at ?? "Unavailable"}
+              </Text>
+              <Text style={styles.body}>
+                Time zone: {weather.time_zone_id ?? "Unavailable"}
+              </Text>
+            </>
+          )}
         </View>
 
         <View style={styles.card}>
