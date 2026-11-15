@@ -1,7 +1,9 @@
 const { test, afterEach, mock } = require("node:test");
 const assert = require("node:assert/strict");
+process.env.EXPO_PUBLIC_API_BASE_URL = "https://weather-backend.example.test/";
 const {
   approximateLocation,
+  getCurrentWeather,
   getWeatherForecast,
   searchWeatherCities,
 } = require("../.expo/weather-tests/services/weatherApi.js");
@@ -293,4 +295,80 @@ test("worldwide search preserves non-Latin names and country qualifiers", async 
     new URL(fetch.mock.calls[0].arguments[0]).searchParams.get("name"),
     "東京, 日本",
   );
+});
+
+function currentWeatherFixture(latitude, longitude) {
+  return {
+    latitude,
+    longitude,
+    temperature_c: 25,
+    feels_like_c: 26,
+    humidity_percent: 70,
+    condition: "Cloudy",
+    precipitation_probability_percent: 30,
+    precipitation_mm: 0,
+    wind_speed_kmh: 10,
+    observed_at: "2026-11-15T12:00:00Z",
+    time_zone_id: "UTC",
+    source: "Google Weather API",
+  };
+}
+
+test("current weather retains the configured backend URL, query and cancellation signal contract", async () => {
+  const weather = currentWeatherFixture(12.34, 56.78);
+  const fetch = respond(weather);
+  const controller = new AbortController();
+
+  assert.deepEqual(
+    await getCurrentWeather(12.34, 56.78, controller.signal),
+    weather,
+  );
+  const [requestedUrl, options] = fetch.mock.calls[0].arguments;
+  const url = new URL(requestedUrl);
+  assert.equal(url.origin, "https://weather-backend.example.test");
+  assert.equal(url.pathname, "/api/weather/current");
+  assert.deepEqual([...url.searchParams.entries()], [
+    ["lat", "12.34"],
+    ["lon", "56.78"],
+  ]);
+  assert.equal(options.signal, controller.signal);
+});
+
+test("current weather reuses its one-minute cache and refreshes when that entry expires", async () => {
+  let now = 1_800_000_000_000;
+  mock.method(Date, "now", () => now);
+  const fetch = respond(currentWeatherFixture(23.45, 67.89));
+  const controller = new AbortController();
+
+  await getCurrentWeather(23.45, 67.89, controller.signal);
+  now += 59_999;
+  await getCurrentWeather(23.45, 67.89, controller.signal);
+  assert.equal(fetch.mock.callCount(), 1);
+  now += 1;
+  await getCurrentWeather(23.45, 67.89, controller.signal);
+  assert.equal(fetch.mock.callCount(), 2);
+});
+
+test("failed current-weather requests are not cached and can be retried", async () => {
+  const weather = currentWeatherFixture(34.56, 78.9);
+  let attempt = 0;
+  const fetch = mock.method(globalThis, "fetch", async () => {
+    attempt += 1;
+    if (attempt === 1) return new Response("unavailable", { status: 503 });
+    if (attempt === 2) throw new TypeError("offline");
+    return new Response(JSON.stringify(weather), { status: 200 });
+  });
+  const controller = new AbortController();
+
+  await assert.rejects(getCurrentWeather(34.56, 78.9, controller.signal), {
+    message: "Weather service request failed.",
+  });
+  await assert.rejects(getCurrentWeather(34.56, 78.9, controller.signal), {
+    name: "TypeError",
+  });
+  assert.deepEqual(
+    await getCurrentWeather(34.56, 78.9, controller.signal),
+    weather,
+  );
+  assert.equal(fetch.mock.callCount(), 3);
 });
