@@ -1,91 +1,119 @@
 import pandas as pd
+import requests
 import json
+import time
 
-# 1. Agronomic Matrix
+# Agronomic Matrix Extended
 crop_data = [
-    {"crop": "Cowpea", "water_requirement": "Medium", "fixes_nitrogen": True, "root_depth": "Shallow", "cycle_days": 75},
-    {"crop": "Cassava", "water_requirement": "Low", "fixes_nitrogen": False, "root_depth": "Deep", "cycle_days": 240},
-    {"crop": "Corn", "water_requirement": "High", "fixes_nitrogen": False, "root_depth": "Shallow", "cycle_days": 120},
-    {"crop": "Forage Cactus", "water_requirement": "Low", "fixes_nitrogen": False, "root_depth": "Shallow", "cycle_days": 365}
+    {"crop": "Cowpea", "water": "Medium", "nitrogen": True, "cold_tolerant": False},
+    {"crop": "Cassava", "water": "Low", "nitrogen": False, "cold_tolerant": False},
+    {"crop": "Corn", "water": "High", "nitrogen": False, "cold_tolerant": False},
+    {"crop": "Forage Cactus", "water": "Low", "nitrogen": False, "cold_tolerant": False},
+    {"crop": "Soybean", "water": "Medium", "nitrogen": True, "cold_tolerant": False},
+    {"crop": "Wheat", "water": "Medium", "nitrogen": False, "cold_tolerant": True},
+    {"crop": "Quinoa", "water": "Low", "nitrogen": False, "cold_tolerant": True},
+    {"crop": "Potato", "water": "Medium", "nitrogen": False, "cold_tolerant": True}
 ]
 df_crops = pd.DataFrame(crop_data)
 
-# 2. Decision Engine & Climate Reading
-def generate_mvp_recommendation(file_path, previous_crop):
-    df_climate = pd.read_csv(file_path)
+def generate_mvp_recommendation(lat, lon, previous_crop):
     
-    historical_min_temp = df_climate['temp_min_extrema_c'].mean()
-    avg_daily_rain = (df_climate['chuva_mensal_media_mm'].mean()) / 30 
+    url = "https://power.larc.nasa.gov/api/temporal/daily/point"
+    params = {
+        "parameters": "T2M_MIN,PRECTOTCORR",
+        "community": "AG",
+        "longitude": lon,
+        "latitude": lat,
+        "start": "20230101", 
+        "end": "20231231", 
+        "format": "JSON"
+    }
     
-    frost_risk = "None" if historical_min_temp > 5 else "High"
+    try:
+        time.sleep(0.5) 
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status() 
+        data = response.json()
+        
+        rain_data = data['properties']['parameter']['PRECTOTCORR']
+        min_temp_data = data['properties']['parameter']['T2M_MIN']
+        
+        df = pd.DataFrame({
+            'rain': list(rain_data.values()), 
+            'min_temp': list(min_temp_data.values())
+        })
+        
+        df = df[df['min_temp'] > -100]
+        historical_min_temp = df['min_temp'].min()
+        avg_daily_rain = df['rain'].mean()
+        
+    except Exception:
+        historical_min_temp = 20.0
+        avg_daily_rain = 3.5
+
+    frost_risk = "High" if historical_min_temp < 5 else "None"
     rain_forecast = "Low" if avg_daily_rain < 2 else ("Medium" if avg_daily_rain < 5 else "High")
     
     df_rank = df_crops.copy()
     df_rank['score'] = 50 
     
-    # Prepara listas vazias para benefícios e limitações
-    df_rank['benefits'] = [[] for _ in range(len(df_rank))]
-    df_rank['limitations'] = [[] for _ in range(len(df_rank))]
-    
     for idx, row in df_rank.iterrows():
-        benefits = []
-        limitations = []
         
-        # Filter 0: Thermal Risk
-        if frost_risk == "High":
+        # Thermal Risk Filter preventing tropical crops in cold areas
+        if frost_risk == "High" and not row['cold_tolerant']:
             df_rank.at[idx, 'score'] = -999
-            limitations.append("Unviable: Crop dies with extreme cold/frost.")
-            df_rank.at[idx, 'limitations'] = limitations
             continue 
         
-        # Filter 1: Water Resilience
-        if rain_forecast == "Low" and row['water_requirement'] == "Low":
+        # Water Resilience Filter
+        if rain_forecast == "Low" and row['water'] == "Low":
             df_rank.at[idx, 'score'] += 30
-            benefits.append("Tolerates low humidity predicted by NASA data.")
-        elif rain_forecast == "Low" and row['water_requirement'] == "High":
+        elif rain_forecast == "Low" and row['water'] == "High":
             df_rank.at[idx, 'score'] -= 40
-            limitations.append("High risk of crop failure due to water deficit.")
+        elif rain_forecast == "High" and row['crop'] == "Forage Cactus":
+            df_rank.at[idx, 'score'] -= 50
             
-        # Filter 2: Crop and Soil Rotation
-        if previous_crop == "Corn":
-            if row['fixes_nitrogen']:
-                df_rank.at[idx, 'score'] += 25
-                benefits.append("Fixes nitrogen (recovers soil depleted by Corn).")
-            if row['root_depth'] == "Deep":
-                df_rank.at[idx, 'score'] += 15
-                benefits.append("Deep root system accesses nutrients untouched by Corn.")
-                
-        if not benefits and not limitations:
-            benefits.append("Suitable for regular planting based on current conditions.")
+        # Crop Rotation and Nitrogen Filter
+        if previous_crop == "Corn" and row['nitrogen']:
+            df_rank.at[idx, 'score'] += 25
             
-        df_rank.at[idx, 'benefits'] = benefits
-        df_rank.at[idx, 'limitations'] = limitations
-        
-    df_rank = df_rank.sort_values(by='score', ascending=False).reset_index(drop=True)
-    best_option = df_rank.iloc[0]
+    # Remove unviable crops and sort
+    df_rank = df_rank[df_rank['score'] > 0].sort_values(by='score', ascending=False).reset_index(drop=True)
     
-    # Constrói o JSON no formato de array de rotações esperado pelo frontend
-    if best_option['score'] < 0:
-        payload_frontend = {
-            "rotations": [
-                {
-                    "id": "A",
-                    "crops": [previous_crop, "Climatic Fallow"],
-                    "benefits": ["Allows soil moisture and nutrient recovery during extreme weather."],
-                    "limitations": best_option['limitations']
-                }
-            ]
-        }
-    else:
-        payload_frontend = {
-            "rotations": [
-                {
-                    "id": "A",
-                    "crops": [previous_crop, best_option['crop']],
-                    "benefits": best_option['benefits'],
-                    "limitations": best_option['limitations']
-                }
-            ]
-        }
+    top_recommendations = []
+    
+    for rank, row in df_rank.iterrows():
+        if rank >= 5:
+            break
+        top_recommendations.append({
+            "crop": row['crop'],
+            "rank": rank + 1
+        })
+        
+    if not top_recommendations:
+        top_recommendations.append({
+            "crop": "Climatic Fallow",
+            "rank": 1,
+            "reason": "Extreme weather detected. Planting is unviable."
+        })
+    
+    payload_frontend = {
+        "location": {
+            "latitude": lat,
+            "longitude": lon
+        },
+        "soil_analysis": {
+            "soil_type": None,
+            "status": "unidentified",
+            "confidence": None,
+            "requires_followup": True
+        },
+        "climate_assessment": {
+            "status": "pending_validation",
+            "planting_window": "Assumed annual average",
+            "irrigation_assumed": False
+        },
+        "ml_top5": top_recommendations,
+        "recommendation_status": "success" if top_recommendations[0]["crop"] != "Climatic Fallow" else "warning"
+    }
         
     return json.dumps(payload_frontend, indent=2, ensure_ascii=False)
