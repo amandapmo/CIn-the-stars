@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, SafeAreaView, StatusBar, Alert, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, SafeAreaView, StatusBar, Alert, TouchableOpacity, Text } from 'react-native';
 import { colors } from '../utils/colors';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -79,6 +79,22 @@ export default function HomeScreen({ navigation }: any) {
           <TouchableOpacity onPress={() => navigation.navigate('ChatAgent')}>
             <ChatBotInput />
           </TouchableOpacity>
+          <View style={styles.footerActions}>
+            <TouchableOpacity
+              style={styles.cameraButton}
+              onPress={() => navigation.navigate('Camera')}
+              accessibilityRole="button"
+            >
+              <Text style={styles.cameraButtonText}>Diagnóstico da folha</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.profileButton}
+              onPress={() => navigation.navigate('Profile')}
+              accessibilityRole="button"
+            >
+              <Text style={styles.cameraButtonText}>Meu Perfil</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <CropSelectionSheet 
@@ -107,6 +123,29 @@ const styles = StyleSheet.create({
     position: 'absolute', 
     bottom: 40, 
     left: 16, 
-    right: 16 
-  }
+    right: 16,
+    gap: 10,
+  },
+  footerActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
+  },
+  cameraButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  profileButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  cameraButtonText: {
+    color: colors.textLight,
+    fontSize: 14,
+    fontWeight: '600',
+  },
 });
