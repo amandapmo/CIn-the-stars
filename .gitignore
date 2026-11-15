@@ -11,3 +11,4 @@
 /vision/**/*.pt
 
 .env
+.venv
