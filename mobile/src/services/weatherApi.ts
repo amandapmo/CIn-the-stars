@@ -1,4 +1,8 @@
-import type { CurrentWeather, WeatherForecast, WeatherLocation } from "../types/weather";
+import type {
+  CurrentWeather,
+  WeatherForecast,
+  WeatherLocation,
+} from "../types/weather";
 
 type RequestOptions = { signal?: AbortSignal; days?: number };
 type ErrorCode = "INPUT" | "HTTP" | "NETWORK" | "TIMEOUT" | "RESPONSE";
@@ -91,6 +95,14 @@ export function approximateLocation(
     origin: location.origin,
     latitude: Math.round(location.latitude * 100) / 100,
     longitude: Math.round(location.longitude * 100) / 100,
+    ...(typeof location.countryCode === "string" &&
+    /^[A-Z]{2}$/.test(location.countryCode)
+      ? { countryCode: location.countryCode }
+      : {}),
+    ...(typeof location.adminRegion === "string" &&
+    location.adminRegion.length <= 100
+      ? { adminRegion: location.adminRegion }
+      : {}),
   };
 }
 
@@ -249,6 +261,11 @@ export async function searchWeatherCities(
       latitude: city.latitude,
       longitude: city.longitude,
       origin: "city",
+      countryCode:
+        typeof city.country_code === "string"
+          ? city.country_code.toUpperCase()
+          : undefined,
+      adminRegion: typeof city.admin1 === "string" ? city.admin1 : undefined,
     });
   });
 }

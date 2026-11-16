@@ -1,22 +1,33 @@
-import pandas as pd
-import requests
 import json
 import time
+from math import isfinite
+
+import pandas as pd
+import requests
 
 # Agronomic Matrix Extended
 crop_data = [
-    {"crop": "Cowpea", "water": "Medium", "nitrogen": True, "cold_tolerant": False},
-    {"crop": "Cassava", "water": "Low", "nitrogen": False, "cold_tolerant": False},
-    {"crop": "Corn", "water": "High", "nitrogen": False, "cold_tolerant": False},
-    {"crop": "Forage Cactus", "water": "Low", "nitrogen": False, "cold_tolerant": False},
-    {"crop": "Soybean", "water": "Medium", "nitrogen": True, "cold_tolerant": False},
-    {"crop": "Wheat", "water": "Medium", "nitrogen": False, "cold_tolerant": True},
-    {"crop": "Quinoa", "water": "Low", "nitrogen": False, "cold_tolerant": True},
-    {"crop": "Potato", "water": "Medium", "nitrogen": False, "cold_tolerant": True}
+    {"crop": "Cowpea", "water": "Medium", "nitrogen": True,
+     "cold_tolerant": False},
+    {"crop": "Cassava", "water": "Low", "nitrogen": False,
+     "cold_tolerant": False},
+    {"crop": "Corn", "water": "High", "nitrogen": False,
+     "cold_tolerant": False},
+    {"crop": "Forage Cactus", "water": "Low", "nitrogen": False,
+     "cold_tolerant": False},
+    {"crop": "Soybean", "water": "Medium", "nitrogen": True,
+     "cold_tolerant": False},
+    {"crop": "Wheat", "water": "Medium", "nitrogen": False,
+     "cold_tolerant": True},
+    {"crop": "Quinoa", "water": "Low", "nitrogen": False,
+     "cold_tolerant": True},
+    {"crop": "Potato", "water": "Medium", "nitrogen": False,
+     "cold_tolerant": True}
 ]
 df_crops = pd.DataFrame(crop_data)
 
-def generate_mvp_recommendation(lat, lon, previous_crop):
+
+def generate_mvp_recommendation(lat, lon, previous_crop, strict_data=False):
     
     url = "https://power.larc.nasa.gov/api/temporal/daily/point"
     params = {
@@ -37,22 +48,42 @@ def generate_mvp_recommendation(lat, lon, previous_crop):
         
         rain_data = data['properties']['parameter']['PRECTOTCORR']
         min_temp_data = data['properties']['parameter']['T2M_MIN']
+
+        if strict_data and rain_data.keys() != min_temp_data.keys():
+            raise ValueError("Historical climate dates do not match.")
         
         df = pd.DataFrame({
             'rain': list(rain_data.values()), 
             'min_temp': list(min_temp_data.values())
         })
+
+        if strict_data:
+            df = df.apply(pd.to_numeric, errors='raise')
+            if (
+                df.empty
+                or not all(isfinite(value) for value in df.to_numpy().flat)
+                or (df['rain'] < 0).any()
+                or (df['min_temp'] <= -100).any()
+            ):
+                raise ValueError("Historical climate data is incomplete.")
         
         df = df[df['min_temp'] > -100]
         historical_min_temp = df['min_temp'].min()
         avg_daily_rain = df['rain'].mean()
         
     except Exception:
+        if strict_data:
+            raise RuntimeError(
+                "Historical climate data is unavailable or invalid."
+            ) from None
         historical_min_temp = 20.0
         avg_daily_rain = 3.5
 
     frost_risk = "High" if historical_min_temp < 5 else "None"
-    rain_forecast = "Low" if avg_daily_rain < 2 else ("Medium" if avg_daily_rain < 5 else "High")
+    rain_forecast = (
+        "Low" if avg_daily_rain < 2
+        else ("Medium" if avg_daily_rain < 5 else "High")
+    )
     
     df_rank = df_crops.copy()
     df_rank['score'] = 50 
@@ -77,7 +108,10 @@ def generate_mvp_recommendation(lat, lon, previous_crop):
             df_rank.at[idx, 'score'] += 25
             
     # Remove unviable crops and sort
-    df_rank = df_rank[df_rank['score'] > 0].sort_values(by='score', ascending=False).reset_index(drop=True)
+    df_rank = (
+        df_rank[df_rank['score'] > 0]
+        .sort_values(by='score', ascending=False).reset_index(drop=True)
+    )
     
     top_recommendations = []
     
@@ -113,7 +147,10 @@ def generate_mvp_recommendation(lat, lon, previous_crop):
             "irrigation_assumed": False
         },
         "ml_top5": top_recommendations,
-        "recommendation_status": "success" if top_recommendations[0]["crop"] != "Climatic Fallow" else "warning"
+        "recommendation_status": (
+            "success" if top_recommendations[0]["crop"] != "Climatic Fallow"
+            else "warning"
+        )
     }
         
     return json.dumps(payload_frontend, indent=2, ensure_ascii=False)

@@ -1,9 +1,4 @@
-import React, {
-  ReactNode,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import React, { ReactNode, useEffect, useRef, useState } from "react";
 
 import {
   ActivityIndicator,
@@ -22,13 +17,14 @@ import {
   TextInputProps,
   View,
   useWindowDimensions,
-} from 'react-native';
+} from "react-native";
 
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as ImagePicker from 'expo-image-picker';
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as ImagePicker from "expo-image-picker";
+import { useLanguage } from "../i18n/LanguageContext";
 
 import Svg, {
   Circle,
@@ -36,14 +32,14 @@ import Svg, {
   LinearGradient as SvgLinearGradient,
   Path,
   Stop,
-} from 'react-native-svg';
+} from "react-native-svg";
 
 /* Dados e tipos */
 
 const PRIORITIES = [
-  'Conservação de Água',
-  'Saúde do Solo',
-  'Rotação Sustentável',
+  "Conservação de Água",
+  "Saúde do Solo",
+  "Rotação Sustentável",
 ] as const;
 
 type Priority = (typeof PRIORITIES)[number];
@@ -79,32 +75,32 @@ type ProfileData = {
   posts: FieldPost[];
 };
 
-type IconName = React.ComponentProps<typeof Ionicons>['name'];
+type IconName = React.ComponentProps<typeof Ionicons>["name"];
 
-const STORAGE_KEY = '@cin-stars/agricultural-profile/v1';
+const STORAGE_KEY = "@cin-stars/agricultural-profile/v1";
 
 const palette = {
-  text: '#f8f7ef',
-  muted: '#c4cbbf',
-  yellow: '#f4c54e',
-  yellowDark: '#e2a123',
-  stroke: 'rgba(236,238,201,0.20)',
-  panel: 'rgba(232,240,215,0.10)',
-  background: '#1c3333',
-  ink: '#233124',
+  text: "#f8f7ef",
+  muted: "#c4cbbf",
+  yellow: "#f4c54e",
+  yellowDark: "#e2a123",
+  stroke: "rgba(236,238,201,0.20)",
+  panel: "rgba(232,240,215,0.10)",
+  background: "#1c3333",
+  ink: "#233124",
 };
 
 const sampleImages: Record<string, string> = {
-  'sample:vegetais':
-    'https://images.unsplash.com/photo-1518843875459-f738682238a6?auto=format&fit=crop&w=1000&q=82',
-  'sample:plantio':
-    'https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&w=1000&q=82',
-  'sample:campo':
-    'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1000&q=82',
-  'sample:mudas':
-    'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=1000&q=82',
-  'sample:colheita':
-    'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=1000&q=82',
+  "sample:vegetais":
+    "https://images.unsplash.com/photo-1518843875459-f738682238a6?auto=format&fit=crop&w=1000&q=82",
+  "sample:plantio":
+    "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&w=1000&q=82",
+  "sample:campo":
+    "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1000&q=82",
+  "sample:mudas":
+    "https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=1000&q=82",
+  "sample:colheita":
+    "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=1000&q=82",
 };
 
 function imageSource(uri: string): ImageSourcePropType {
@@ -114,141 +110,152 @@ function imageSource(uri: string): ImageSourcePropType {
 const INITIAL_DATA: ProfileData = {
   version: 1,
   profile: {
-    name: 'João Silva',
-    location: 'Pernambuco, BR',
-    biome: 'Semiárido',
-    bio: 'Agricultor familiar há 15 anos, focado em convivência com o semiárido e manejo sustentável.',
-    avatarUri: '',
-    areaHa: '12',
-    soil: 'Franco-arenoso',
-    irrigation: 'Sequeiro',
+    name: "João Silva",
+    location: "Pernambuco, BR",
+    biome: "Semiárido",
+    bio: "Agricultor familiar há 15 anos, focado em convivência com o semiárido e manejo sustentável.",
+    avatarUri: "",
+    areaHa: "12",
+    soil: "Franco-arenoso",
+    irrigation: "Sequeiro",
     priorities: [...PRIORITIES],
   },
   posts: [
     {
-      id: 'milho',
-      title: 'Cultivo de Milho em Linha',
-      coverText: 'Milho em Linha',
-      imageUri: '',
-      priorities: ['Conservação de Água', 'Rotação Sustentável'],
+      id: "milho",
+      title: "Cultivo de Milho em Linha",
+      coverText: "Milho em Linha",
+      imageUri: "",
+      priorities: ["Conservação de Água", "Rotação Sustentável"],
       liked: true,
       notes:
-        'Plantio em curvas de nível para retenção da umidade das chuvas no solo franco-arenoso e aumento da produtividade no semiárido.',
+        "Plantio em curvas de nível para retenção da umidade das chuvas no solo franco-arenoso e aumento da produtividade no semiárido.",
     },
     {
-      id: 'preparo',
-      title: 'Preparo e Estrutura do Solo',
-      coverText: 'Preparo do solo',
-      imageUri: 'sample:vegetais',
-      priorities: ['Saúde do Solo'],
+      id: "preparo",
+      title: "Preparo e Estrutura do Solo",
+      coverText: "Preparo do solo",
+      imageUri: "sample:vegetais",
+      priorities: ["Saúde do Solo"],
       liked: false,
       notes:
-        'Cobertura orgânica e preparo mínimo para preservar a estrutura do solo e criar boas condições para o desenvolvimento das raízes.',
+        "Cobertura orgânica e preparo mínimo para preservar a estrutura do solo e criar boas condições para o desenvolvimento das raízes.",
     },
     {
-      id: 'irrigacao',
-      title: 'Irrigação Localizada',
-      coverText: 'Água na medida certa',
-      imageUri: 'sample:plantio',
-      priorities: ['Conservação de Água'],
+      id: "irrigacao",
+      title: "Irrigação Localizada",
+      coverText: "Água na medida certa",
+      imageUri: "sample:plantio",
+      priorities: ["Conservação de Água"],
       liked: false,
       notes:
-        'Irrigação próxima às raízes, com acompanhamento da umidade do solo para reduzir a evaporação e o desperdício de água.',
+        "Irrigação próxima às raízes, com acompanhamento da umidade do solo para reduzir a evaporação e o desperdício de água.",
     },
     {
-      id: 'consorcio',
-      title: 'Consórcio de Leguminosas',
-      coverText: 'Diversidade no campo',
-      imageUri: 'sample:campo',
-      priorities: ['Rotação Sustentável', 'Saúde do Solo'],
+      id: "consorcio",
+      title: "Consórcio de Leguminosas",
+      coverText: "Diversidade no campo",
+      imageUri: "sample:campo",
+      priorities: ["Rotação Sustentável", "Saúde do Solo"],
       liked: false,
       notes:
-        'Consórcio de culturas e leguminosas adaptadas à região para diversificar a produção e manter o solo coberto entre os ciclos.',
+        "Consórcio de culturas e leguminosas adaptadas à região para diversificar a produção e manter o solo coberto entre os ciclos.",
     },
     {
-      id: 'hortalicas',
-      title: 'Hortaliças e Biofertilizantes',
-      coverText: 'Vida que cresce',
-      imageUri: 'sample:mudas',
-      priorities: ['Saúde do Solo'],
+      id: "hortalicas",
+      title: "Hortaliças e Biofertilizantes",
+      coverText: "Vida que cresce",
+      imageUri: "sample:mudas",
+      priorities: ["Saúde do Solo"],
       liked: false,
       notes:
-        'Manejo integrado com biofertilizante orgânico produzido na propriedade, garantindo folhas vigorosas e livres de defensivos sintéticos.',
+        "Manejo integrado com biofertilizante orgânico produzido na propriedade, garantindo folhas vigorosas e livres de defensivos sintéticos.",
     },
     {
-      id: 'colheita',
-      title: 'Colheita e Secagem',
-      coverText: 'Tempo de colher',
-      imageUri: 'sample:colheita',
-      priorities: ['Rotação Sustentável'],
+      id: "colheita",
+      title: "Colheita e Secagem",
+      coverText: "Tempo de colher",
+      imageUri: "sample:colheita",
+      priorities: ["Rotação Sustentável"],
       liked: false,
       notes:
-        'Colheita no ponto adequado e secagem em local ventilado, com acompanhamento da umidade para preservar a qualidade dos grãos.',
+        "Colheita no ponto adequado e secagem em local ventilado, com acompanhamento da umidade para preservar a qualidade dos grãos.",
     },
   ].map(
-    post =>
+    (post) =>
       ({
-        badge: 'Boas técnicas',
-        category: 'Registro de Campo',
-        biome: 'Semiárido',
+        badge: "Boas técnicas",
+        category: "Registro de Campo",
+        biome: "Semiárido",
         ...post,
       }) as FieldPost,
   ),
 };
 
+function displayPostText(
+  post: FieldPost,
+  field: "title" | "coverText" | "badge" | "category" | "biome" | "notes",
+  translate: (text: string) => string,
+): string {
+  const original = INITIAL_DATA.posts.find((item) => item.id === post.id);
+  return original && post[field] === original[field]
+    ? translate(post[field])
+    : post[field];
+}
+
 function newPost(profile: FarmerProfile): FieldPost {
   return {
     id: `post-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-    title: '',
-    coverText: '',
-    imageUri: '',
-    badge: 'Boas técnicas',
-    category: 'Registro de Campo',
+    title: "",
+    coverText: "",
+    imageUri: "",
+    badge: "Boas técnicas",
+    category: "Registro de Campo",
     biome: profile.biome,
     priorities: [],
-    notes: '',
+    notes: "",
     liked: false,
   };
 }
 
 function validateProfile(value: FarmerProfile): string | null {
-  if (!value.name.trim()) return 'Preencha o nome.';
-  if (!value.location.trim()) return 'Preencha a localização.';
-  if (!value.biome.trim()) return 'Preencha a região ou o bioma.';
+  if (!value.name.trim()) return "Preencha o nome.";
+  if (!value.location.trim()) return "Preencha a localização.";
+  if (!value.biome.trim()) return "Preencha a região ou o bioma.";
 
-  const area = Number(value.areaHa.replace(',', '.'));
+  const area = Number(value.areaHa.replace(",", "."));
 
   if (!Number.isFinite(area) || area <= 0) {
-    return 'Informe uma área maior que zero, em hectares.';
+    return "Informe uma área maior que zero, em hectares.";
   }
 
-  if (!value.soil.trim()) return 'Informe o tipo de solo.';
-  if (!value.irrigation.trim()) return 'Informe o sistema de irrigação.';
+  if (!value.soil.trim()) return "Informe o tipo de solo.";
+  if (!value.irrigation.trim()) return "Informe o sistema de irrigação.";
 
   if (!value.priorities.length) {
-    return 'Selecione pelo menos uma prioridade agrícola.';
+    return "Selecione pelo menos uma prioridade agrícola.";
   }
 
   return null;
 }
 
 function validatePost(value: FieldPost): string | null {
-  if (!value.title.trim()) return 'Preencha o título da postagem.';
+  if (!value.title.trim()) return "Preencha o título da postagem.";
 
   if (!value.imageUri && !value.coverText.trim()) {
-    return 'Escolha uma foto ou escreva um texto para a capa.';
+    return "Escolha uma foto ou escreva um texto para a capa.";
   }
 
-  if (!value.badge.trim()) return 'Preencha o selo do card.';
-  if (!value.category.trim()) return 'Preencha o tipo de registro.';
-  if (!value.biome.trim()) return 'Preencha a região ou o bioma.';
+  if (!value.badge.trim()) return "Preencha o selo do card.";
+  if (!value.category.trim()) return "Preencha o tipo de registro.";
+  if (!value.biome.trim()) return "Preencha a região ou o bioma.";
 
   if (!value.priorities.length) {
-    return 'Selecione pelo menos uma técnica agrícola.';
+    return "Selecione pelo menos uma técnica agrícola.";
   }
 
   if (!value.notes.trim()) {
-    return 'Escreva a legenda e as observações.';
+    return "Escreva a legenda e as observações.";
   }
 
   return null;
@@ -257,20 +264,17 @@ function validatePost(value: FieldPost): string | null {
 /* Persistência local */
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
+  return typeof value === "object" && value !== null;
 }
 
-function hasStrings(
-  value: Record<string, unknown>,
-  keys: string[],
-) {
-  return keys.every(key => typeof value[key] === 'string');
+function hasStrings(value: Record<string, unknown>, keys: string[]) {
+  return keys.every((key) => typeof value[key] === "string");
 }
 
 function hasPriorities(value: Record<string, unknown>) {
   return (
     Array.isArray(value.priorities) &&
-    value.priorities.every(item => PRIORITIES.includes(item))
+    value.priorities.every((item) => PRIORITIES.includes(item))
   );
 }
 
@@ -286,14 +290,14 @@ function isProfileData(value: unknown): value is ProfileData {
 
   if (
     !hasStrings(value.profile, [
-      'name',
-      'location',
-      'biome',
-      'bio',
-      'avatarUri',
-      'areaHa',
-      'soil',
-      'irrigation',
+      "name",
+      "location",
+      "biome",
+      "bio",
+      "avatarUri",
+      "areaHa",
+      "soil",
+      "irrigation",
     ]) ||
     !hasPriorities(value.profile)
   ) {
@@ -302,21 +306,21 @@ function isProfileData(value: unknown): value is ProfileData {
 
   const ids = new Set<string>();
 
-  return value.posts.every(post => {
+  return value.posts.every((post) => {
     if (
       !isRecord(post) ||
       !hasStrings(post, [
-        'id',
-        'title',
-        'coverText',
-        'imageUri',
-        'badge',
-        'category',
-        'biome',
-        'notes',
+        "id",
+        "title",
+        "coverText",
+        "imageUri",
+        "badge",
+        "category",
+        "biome",
+        "notes",
       ]) ||
       !hasPriorities(post) ||
-      typeof post.liked !== 'boolean'
+      typeof post.liked !== "boolean"
     ) {
       return false;
     }
@@ -335,19 +339,19 @@ function useProfileStore() {
 
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState(0);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
     let active = true;
 
     AsyncStorage.getItem(STORAGE_KEY)
-      .then(raw => {
+      .then((raw) => {
         if (!active || !raw) return;
 
         const saved: unknown = JSON.parse(raw);
 
         if (!isProfileData(saved)) {
-          throw new Error('Formato de dados inválido.');
+          throw new Error("Formato de dados inválido.");
         }
 
         current.current = saved;
@@ -356,7 +360,7 @@ function useProfileStore() {
       .catch(() => {
         if (active) {
           setError(
-            'Não foi possível carregar os dados salvos. Os exemplos estão sendo exibidos.',
+            "Não foi possível carregar os dados salvos. Os exemplos estão sendo exibidos.",
           );
         }
       })
@@ -370,29 +374,26 @@ function useProfileStore() {
   }, []);
 
   function update(change: (previous: ProfileData) => ProfileData) {
-    setPending(value => value + 1);
+    setPending((value) => value + 1);
 
     const operation = queue.current
       .then(async () => {
         const next = change(current.current);
 
-        await AsyncStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify(next),
-        );
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
 
         current.current = next;
         setData(next);
-        setError('');
+        setError("");
       })
       .catch(() => {
         const message =
-          'Não foi possível salvar. Verifique o espaço disponível e tente novamente.';
+          "Não foi possível salvar. Verifique o espaço disponível e tente novamente.";
 
         setError(message);
         throw new Error(message);
       })
-      .finally(() => setPending(value => value - 1));
+      .finally(() => setPending((value) => value - 1));
 
     queue.current = operation.catch(() => undefined);
 
@@ -406,33 +407,29 @@ function useProfileStore() {
     error,
 
     saveProfile: (profile: FarmerProfile) =>
-      update(previous => ({ ...previous, profile })),
+      update((previous) => ({ ...previous, profile })),
 
     savePost: (post: FieldPost) =>
-      update(previous => ({
+      update((previous) => ({
         ...previous,
-        posts: previous.posts.some(item => item.id === post.id)
-          ? previous.posts.map(item =>
-              item.id === post.id ? post : item,
-            )
+        posts: previous.posts.some((item) => item.id === post.id)
+          ? previous.posts.map((item) => (item.id === post.id ? post : item))
           : [post, ...previous.posts],
       })),
 
     setNotes: (id: string, notes: string) =>
-      update(previous => ({
+      update((previous) => ({
         ...previous,
-        posts: previous.posts.map(post =>
+        posts: previous.posts.map((post) =>
           post.id === id ? { ...post, notes } : post,
         ),
       })),
 
     toggleLike: (id: string) =>
-      update(previous => ({
+      update((previous) => ({
         ...previous,
-        posts: previous.posts.map(post =>
-          post.id === id
-            ? { ...post, liked: !post.liked }
-            : post,
+        posts: previous.posts.map((post) =>
+          post.id === id ? { ...post, liked: !post.liked } : post,
         ),
       })),
   };
@@ -442,41 +439,35 @@ function useProfileStore() {
 
 async function choosePhoto(square = false): Promise<string | null> {
   const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ['images'],
+    mediaTypes: ["images"],
     allowsEditing: true,
     aspect: square ? [1, 1] : [4, 3],
     quality: 0.7,
-    base64: Platform.OS === 'web',
+    base64: Platform.OS === "web",
   });
 
   if (result.canceled || !result.assets[0]) return null;
 
   const asset = result.assets[0];
 
-  if (Platform.OS === 'web') {
+  if (Platform.OS === "web") {
     if (!asset.base64) {
-      throw new Error(
-        'Não foi possível ler a imagem. Escolha outra foto.',
-      );
+      throw new Error("Não foi possível ler a imagem. Escolha outra foto.");
     }
 
-    return `data:${asset.mimeType || 'image/jpeg'};base64,${asset.base64}`;
+    return `data:${asset.mimeType || "image/jpeg"};base64,${asset.base64}`;
   }
 
-  const { Directory, File, Paths } = await import('expo-file-system');
+  const { Directory, File, Paths } = await import("expo-file-system");
 
-  const directory = new Directory(
-    Paths.document,
-    'agricultural-profile',
-  );
+  const directory = new Directory(Paths.document, "agricultural-profile");
 
   directory.create({
     idempotent: true,
     intermediates: true,
   });
 
-  const extension =
-    asset.fileName?.match(/\.[a-z0-9]+$/i)?.[0] || '.jpg';
+  const extension = asset.fileName?.match(/\.[a-z0-9]+$/i)?.[0] || ".jpg";
 
   const destination = new File(
     directory,
@@ -489,12 +480,13 @@ async function choosePhoto(square = false): Promise<string | null> {
 }
 
 function FarmerAvatar({ size = 100 }: { size?: number }) {
+  const { t } = useLanguage();
   return (
     <Svg
       width={size}
       height={size}
       viewBox="0 0 100 100"
-      accessibilityLabel="Ilustração de agricultor"
+      accessibilityLabel={t("Ilustração de agricultor")}
     >
       <Defs>
         <SvgLinearGradient id="avatar-bg" x2="1" y2="1">
@@ -509,10 +501,7 @@ function FarmerAvatar({ size = 100 }: { size?: number }) {
         d="M13 100 22 78Q29 70 42 70H60Q75 72 80 82L87 100"
         fill="#416747"
       />
-      <Path
-        d="M40 64V77L50 87 61 76V63"
-        fill="#c18d63"
-      />
+      <Path d="M40 64V77L50 87 61 76V63" fill="#c18d63" />
       <Path
         d="M28 40Q26 18 48 17 71 16 70 39L66 60Q60 74 49 74 38 72 32 59Z"
         fill="#d0a274"
@@ -536,15 +525,8 @@ function FarmerAvatar({ size = 100 }: { size?: number }) {
         fill="none"
         strokeLinecap="round"
       />
-      <Path
-        d="m32 73 17 14 15-14-4 26H36Z"
-        fill="#b4bd79"
-      />
-      <Path
-        d="m26 77 7 23M72 78l-6 22"
-        stroke="#9d673f"
-        strokeWidth="4"
-      />
+      <Path d="m32 73 17 14 15-14-4 26H36Z" fill="#b4bd79" />
+      <Path d="m26 77 7 23M72 78l-6 22" stroke="#9d673f" strokeWidth="4" />
     </Svg>
   );
 }
@@ -568,6 +550,7 @@ function Action({
   disabled?: boolean;
   compact?: boolean;
 }) {
+  const { t } = useLanguage();
   const iconElement = icon ? (
     <Ionicons
       name={icon}
@@ -579,7 +562,7 @@ function Action({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={t(label)}
       disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => [
@@ -595,7 +578,7 @@ function Action({
       <LinearGradient
         colors={
           secondary
-            ? ['#344544', '#304341']
+            ? ["#344544", "#304341"]
             : [palette.yellow, palette.yellowDark]
         }
         start={{ x: 0, y: 0 }}
@@ -608,13 +591,8 @@ function Action({
       >
         {!iconAfter && iconElement}
 
-        <Text
-          style={[
-            u.actionText,
-            secondary && { color: palette.text },
-          ]}
-        >
-          {label}
+        <Text style={[u.actionText, secondary && { color: palette.text }]}>
+          {t(label)}
         </Text>
 
         {iconAfter && iconElement}
@@ -636,10 +614,11 @@ function IconButton({
   disabled?: boolean;
   active?: boolean;
 }) {
+  const { t } = useLanguage();
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={t(label)}
       accessibilityState={{ disabled, selected: active }}
       disabled={disabled}
       onPress={onPress}
@@ -654,7 +633,7 @@ function IconButton({
       <Ionicons
         name={name}
         size={26}
-        color={active ? '#ffb3c3' : palette.text}
+        color={active ? "#ffb3c3" : palette.text}
       />
     </Pressable>
   );
@@ -668,20 +647,20 @@ const chipColors: Record<
     color: string;
   }
 > = {
-  'Conservação de Água': {
-    backgroundColor: '#27545a',
-    borderColor: '#54888e',
-    color: '#c6e5e5',
+  "Conservação de Água": {
+    backgroundColor: "#27545a",
+    borderColor: "#54888e",
+    color: "#c6e5e5",
   },
-  'Saúde do Solo': {
-    backgroundColor: '#67531e',
-    borderColor: '#a1853b',
-    color: '#f5e0a5',
+  "Saúde do Solo": {
+    backgroundColor: "#67531e",
+    borderColor: "#a1853b",
+    color: "#f5e0a5",
   },
-  'Rotação Sustentável': {
-    backgroundColor: '#505c24',
-    borderColor: '#919c43',
-    color: '#e5e9b5',
+  "Rotação Sustentável": {
+    backgroundColor: "#505c24",
+    borderColor: "#919c43",
+    color: "#e5e9b5",
   },
 };
 
@@ -694,16 +673,14 @@ function Chip({
   selected?: boolean;
   onPress?: () => void;
 }) {
+  const { t } = useLanguage();
   const color = chipColors[priority];
 
   const body = (
     <Text
-      style={[
-        u.chipText,
-        { color: selected ? color.color : palette.muted },
-      ]}
+      style={[u.chipText, { color: selected ? color.color : palette.muted }]}
     >
-      {priority}
+      {t(priority)}
     </Text>
   );
 
@@ -722,14 +699,13 @@ function Chip({
   return (
     <Pressable
       accessibilityRole="checkbox"
-      accessibilityLabel={priority}
+      accessibilityLabel={t(priority)}
+      aria-checked={selected}
       accessibilityState={{ checked: selected }}
       onPress={onPress}
       style={style}
     >
-      {selected && (
-        <Ionicons name="checkmark" size={14} color={color.color} />
-      )}
+      {selected && <Ionicons name="checkmark" size={14} color={color.color} />}
       {body}
     </Pressable>
   );
@@ -738,21 +714,20 @@ function Chip({
 function PriorityPicker({
   value,
   onChange,
-  label = 'Prioridades agrícolas *',
+  label = "Prioridades agrícolas *",
 }: {
   value: Priority[];
   onChange: (value: Priority[]) => void;
   label?: string;
 }) {
+  const { t } = useLanguage();
   return (
     <View style={u.field}>
-      <Text style={u.label}>{label}</Text>
-      <Text style={u.hint}>
-        Pode selecionar mais de uma opção.
-      </Text>
+      <Text style={u.label}>{t(label)}</Text>
+      <Text style={u.hint}>{t("Pode selecionar mais de uma opção.")}</Text>
 
       <View style={u.wrap}>
-        {PRIORITIES.map(priority => (
+        {PRIORITIES.map((priority) => (
           <Chip
             key={priority}
             priority={priority}
@@ -760,7 +735,7 @@ function PriorityPicker({
             onPress={() =>
               onChange(
                 value.includes(priority)
-                  ? value.filter(item => item !== priority)
+                  ? value.filter((item) => item !== priority)
                   : [...value, priority],
               )
             }
@@ -779,60 +754,50 @@ function Field({
   label: string;
   hint?: string;
 }) {
+  const { t } = useLanguage();
   return (
     <View style={u.field}>
-      <Text style={u.label}>{label}</Text>
+      <Text style={u.label}>{t(label)}</Text>
 
       <TextInput
-        accessibilityLabel={label.replace(' *', '')}
+        accessibilityLabel={t(label).replace(" *", "")}
         placeholderTextColor="#87988d"
         selectionColor={palette.yellow}
         {...props}
-        style={[
-          u.input,
-          props.multiline && u.textarea,
-          props.style,
-        ]}
+        placeholder={props.placeholder ? t(props.placeholder) : undefined}
+        style={[u.input, props.multiline && u.textarea, props.style]}
       />
 
-      {!!hint && <Text style={u.hint}>{hint}</Text>}
+      {!!hint && <Text style={u.hint}>{t(hint)}</Text>}
     </View>
   );
 }
 
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) {
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  const { t } = useLanguage();
   return (
     <View style={u.section}>
-      <Text style={u.sectionLabel}>{title}</Text>
+      <Text style={u.sectionLabel}>{t(title)}</Text>
       {children}
     </View>
   );
 }
 
 function ErrorBox({ message }: { message: string }) {
+  const { t } = useLanguage();
   if (!message) return null;
 
   return (
     <View accessibilityRole="alert" style={u.errorBox}>
-      <Ionicons
-        name="alert-circle-outline"
-        size={20}
-        color="#ffd3ba"
-      />
-      <Text style={u.errorText}>{message}</Text>
+      <Ionicons name="alert-circle-outline" size={20} color="#ffd3ba" />
+      <Text style={u.errorText}>{t(message)}</Text>
     </View>
   );
 }
 
 function Photo({
   uri,
-  coverText = '',
+  coverText = "",
   avatar = false,
   onChange,
 }: {
@@ -841,12 +806,13 @@ function Photo({
   avatar?: boolean;
   onChange: (uri: string) => void;
 }) {
+  const { t } = useLanguage();
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   async function pick() {
     setBusy(true);
-    setError('');
+    setError("");
 
     try {
       const photo = await choosePhoto(avatar);
@@ -855,7 +821,7 @@ function Photo({
       setError(
         cause instanceof Error
           ? cause.message
-          : 'Não foi possível abrir a galeria.',
+          : "Não foi possível abrir a galeria.",
       );
     } finally {
       setBusy(false);
@@ -865,29 +831,21 @@ function Photo({
   return (
     <View style={u.field}>
       <Text style={u.label}>
-        {avatar ? 'Foto do perfil' : 'Imagem da postagem'}
+        {t(avatar ? "Foto do perfil" : "Imagem da postagem")}
       </Text>
 
-      <View
-        style={[
-          u.photoPreview,
-          avatar && u.avatarPreview,
-        ]}
-      >
+      <View style={[u.photoPreview, avatar && u.avatarPreview]}>
         {uri ? (
           <Image
             source={imageSource(uri)}
-            style={[
-              StyleSheet.absoluteFill,
-              { width: '100%', height: '100%' },
-            ]}
+            style={[StyleSheet.absoluteFill, { width: "100%", height: "100%" }]}
             resizeMode="cover"
-            accessibilityLabel={
-              avatar ? 'Foto do perfil' : 'Imagem selecionada'
-            }
+            accessibilityLabel={t(
+              avatar ? "Foto do perfil" : "Imagem selecionada",
+            )}
             onError={() =>
               setError(
-                'Não foi possível carregar esta imagem. Escolha outra foto.',
+                "Não foi possível carregar esta imagem. Escolha outra foto.",
               )
             }
           />
@@ -895,13 +853,9 @@ function Photo({
           <FarmerAvatar size={104} />
         ) : (
           <>
-            <Ionicons
-              name="images-outline"
-              size={30}
-              color={palette.yellow}
-            />
+            <Ionicons name="images-outline" size={30} color={palette.yellow} />
             <Text style={u.hint}>
-              {coverText || 'Uma foto conta a sua história'}
+              {coverText || t("Uma foto conta a sua história")}
             </Text>
           </>
         )}
@@ -909,7 +863,7 @@ function Photo({
 
       <View style={u.row}>
         <Action
-          label={busy ? 'Abrindo galeria…' : 'Escolher foto'}
+          label={busy ? "Abrindo galeria…" : "Escolher foto"}
           icon="image-outline"
           secondary
           onPress={() => {
@@ -923,8 +877,8 @@ function Photo({
             name="trash-outline"
             label="Remover foto"
             onPress={() => {
-              onChange('');
-              setError('');
+              onChange("");
+              setError("");
             }}
             disabled={busy}
           />
@@ -947,44 +901,29 @@ function PostVisual({
   children?: ReactNode;
   mini?: boolean;
 }) {
-  const [failedUri, setFailedUri] = useState('');
+  const { t } = useLanguage();
+  const [failedUri, setFailedUri] = useState("");
 
-  const showImage =
-    !!post.imageUri && failedUri !== post.imageUri;
+  const showImage = !!post.imageUri && failedUri !== post.imageUri;
 
   return (
-    <View
-      style={[
-        u.visual,
-        !mini && { minHeight: 320 },
-      ]}
-    >
+    <View style={[u.visual, !mini && { minHeight: 320 }]}>
       {showImage ? (
         <Image
           source={imageSource(post.imageUri)}
-          style={[
-            StyleSheet.absoluteFill,
-            { width: '100%', height: '100%' },
-          ]}
+          style={[StyleSheet.absoluteFill, { width: "100%", height: "100%" }]}
           resizeMode="cover"
-          accessibilityLabel={post.title}
+          accessibilityLabel={displayPostText(post, "title", t)}
           onError={() => setFailedUri(post.imageUri)}
         />
       ) : (
-        <View
-          style={[
-            u.coverFallback,
-            mini && { padding: 4 },
-          ]}
-        >
+        <View style={[u.coverFallback, mini && { padding: 4 }]}>
           <Text
             numberOfLines={mini ? 2 : 4}
-            style={[
-              u.coverText,
-              mini && u.miniCoverText,
-            ]}
+            style={[u.coverText, mini && u.miniCoverText]}
           >
-            {post.coverText || post.title}
+            {displayPostText(post, "coverText", t) ||
+              displayPostText(post, "title", t)}
           </Text>
         </View>
       )}
@@ -1015,13 +954,13 @@ function FormFrame({
   children: ReactNode;
   error: string;
 }) {
-  const scroll =
-    useRef<React.ComponentRef<typeof ScrollView>>(null);
+  const { t } = useLanguage();
+  const scroll = useRef<React.ComponentRef<typeof ScrollView>>(null);
 
   return (
     <KeyboardAvoidingView
       style={e.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <View style={e.header}>
         <IconButton
@@ -1032,9 +971,9 @@ function FormFrame({
         />
 
         <View style={e.flex}>
-          <Text style={e.eyebrow}>MEU CANTO NO CAMPO</Text>
+          <Text style={e.eyebrow}>{t("MEU CANTO NO CAMPO")}</Text>
           <Text accessibilityRole="header" style={e.title}>
-            {title}
+            {t(title)}
           </Text>
         </View>
       </View>
@@ -1061,7 +1000,7 @@ function FormFrame({
           <ErrorBox message={error} />
         </View>
 
-        <Text style={u.hint}>* Campos obrigatórios.</Text>
+        <Text style={u.hint}>{t("* Campos obrigatórios.")}</Text>
       </ScrollView>
 
       <View style={e.footer}>
@@ -1073,7 +1012,7 @@ function FormFrame({
         />
 
         <Action
-          label={saving ? 'Salvando…' : submitLabel}
+          label={saving ? "Salvando…" : submitLabel}
           onPress={onSave}
           icon="checkmark"
           disabled={saving}
@@ -1092,24 +1031,18 @@ function Options({
   options: string[];
   onChange: (value: string) => void;
 }) {
+  const { t } = useLanguage();
   return (
-    <View
-      style={[
-        u.wrap,
-        { marginTop: -7, marginBottom: 22 },
-      ]}
-    >
-      {options.map(option => (
+    <View style={[u.wrap, { marginTop: -7, marginBottom: 22 }]}>
+      {options.map((option) => (
         <Pressable
           key={option}
           accessibilityRole="radio"
-          accessibilityLabel={option}
+          accessibilityLabel={t(option)}
+          aria-checked={value === option}
           accessibilityState={{ selected: value === option }}
           onPress={() => onChange(option)}
-          style={[
-            e.option,
-            value === option && e.selectedOption,
-          ]}
+          style={[e.option, value === option && e.selectedOption]}
         >
           <Text
             style={[
@@ -1119,7 +1052,7 @@ function Options({
               },
             ]}
           >
-            {option}
+            {t(option)}
           </Text>
         </Pressable>
       ))}
@@ -1138,19 +1071,20 @@ function ProfileEditor({
   onSave: (value: FarmerProfile) => Promise<void>;
   saving: boolean;
 }) {
+  const { t } = useLanguage();
   const [draft, setDraft] = useState<FarmerProfile>({
     ...profile,
     priorities: [...profile.priorities],
   });
 
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   function change<K extends keyof FarmerProfile>(
     key: K,
     value: FarmerProfile[K],
   ) {
-    setDraft(previous => ({ ...previous, [key]: value }));
-    setError('');
+    setDraft((previous) => ({ ...previous, [key]: value }));
+    setError("");
   }
 
   async function submit() {
@@ -1169,7 +1103,7 @@ function ProfileEditor({
       bio: draft.bio.trim(),
       soil: draft.soil.trim(),
       irrigation: draft.irrigation.trim(),
-      areaHa: String(Number(draft.areaHa.replace(',', '.'))),
+      areaHa: String(Number(draft.areaHa.replace(",", "."))),
     };
 
     try {
@@ -1178,7 +1112,7 @@ function ProfileEditor({
       setError(
         cause instanceof Error
           ? cause.message
-          : 'Não foi possível salvar o perfil.',
+          : "Não foi possível salvar o perfil.",
       );
     }
   }
@@ -1186,7 +1120,9 @@ function ProfileEditor({
   return (
     <FormFrame
       title="Editar perfil"
-      subtitle="Seu campo tem uma história. Conte um pouco sobre você e sua propriedade."
+      subtitle={t(
+        "Seu campo tem uma história. Conte um pouco sobre você e sua propriedade.",
+      )}
       onClose={onClose}
       onSave={() => {
         void submit();
@@ -1199,13 +1135,13 @@ function ProfileEditor({
         <Photo
           avatar
           uri={draft.avatarUri}
-          onChange={value => change('avatarUri', value)}
+          onChange={(value) => change("avatarUri", value)}
         />
 
         <Field
           label="Nome *"
           value={draft.name}
-          onChangeText={value => change('name', value)}
+          onChangeText={(value) => change("name", value)}
           placeholder="Como você se chama?"
           maxLength={70}
           autoComplete="name"
@@ -1214,7 +1150,7 @@ function ProfileEditor({
         <Field
           label="Localização *"
           value={draft.location}
-          onChangeText={value => change('location', value)}
+          onChangeText={(value) => change("location", value)}
           placeholder="Ex.: Pernambuco, BR"
           maxLength={80}
         />
@@ -1222,7 +1158,7 @@ function ProfileEditor({
         <Field
           label="Região ou bioma *"
           value={draft.biome}
-          onChangeText={value => change('biome', value)}
+          onChangeText={(value) => change("biome", value)}
           placeholder="Ex.: Semiárido"
           maxLength={50}
         />
@@ -1230,11 +1166,11 @@ function ProfileEditor({
         <Field
           label="Biografia"
           value={draft.bio}
-          onChangeText={value => change('bio', value)}
+          onChangeText={(value) => change("bio", value)}
           multiline
           maxLength={300}
           placeholder="Sua experiência, seus cultivos e sua relação com a terra…"
-          hint={`${draft.bio.length}/300 caracteres`}
+          hint={`${draft.bio.length}/300 ${t("caracteres")}`}
         />
       </Section>
 
@@ -1242,7 +1178,7 @@ function ProfileEditor({
         <Field
           label="Área da propriedade (ha) *"
           value={draft.areaHa}
-          onChangeText={value => change('areaHa', value)}
+          onChangeText={(value) => change("areaHa", value)}
           keyboardType="decimal-pad"
           placeholder="Ex.: 12 ou 12,5"
           maxLength={12}
@@ -1251,46 +1187,46 @@ function ProfileEditor({
         <Field
           label="Tipo de solo *"
           value={draft.soil}
-          onChangeText={value => change('soil', value)}
+          onChangeText={(value) => change("soil", value)}
           placeholder="Ex.: Franco-arenoso"
           maxLength={60}
         />
 
         <Options
           value={draft.soil}
-          onChange={value => change('soil', value)}
+          onChange={(value) => change("soil", value)}
           options={[
-            'Franco-arenoso',
-            'Argiloso',
-            'Arenoso',
-            'Siltoso',
-            'Franco',
+            "Franco-arenoso",
+            "Argiloso",
+            "Arenoso",
+            "Siltoso",
+            "Franco",
           ]}
         />
 
         <Field
           label="Sistema de irrigação *"
           value={draft.irrigation}
-          onChangeText={value => change('irrigation', value)}
+          onChangeText={(value) => change("irrigation", value)}
           placeholder="Ex.: Sequeiro"
           maxLength={60}
         />
 
         <Options
           value={draft.irrigation}
-          onChange={value => change('irrigation', value)}
+          onChange={(value) => change("irrigation", value)}
           options={[
-            'Sequeiro',
-            'Gotejamento',
-            'Aspersão',
-            'Microaspersão',
-            'Sulcos',
+            "Sequeiro",
+            "Gotejamento",
+            "Aspersão",
+            "Microaspersão",
+            "Sulcos",
           ]}
         />
 
         <PriorityPicker
           value={draft.priorities}
-          onChange={value => change('priorities', value)}
+          onChange={(value) => change("priorities", value)}
         />
       </Section>
     </FormFrame>
@@ -1310,19 +1246,17 @@ function PostEditor({
   onSave: (value: FieldPost) => Promise<void>;
   saving: boolean;
 }) {
+  const { t } = useLanguage();
   const [draft, setDraft] = useState<FieldPost>({
     ...post,
     priorities: [...post.priorities],
   });
 
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
-  function change<K extends keyof FieldPost>(
-    key: K,
-    value: FieldPost[K],
-  ) {
-    setDraft(previous => ({ ...previous, [key]: value }));
-    setError('');
+  function change<K extends keyof FieldPost>(key: K, value: FieldPost[K]) {
+    setDraft((previous) => ({ ...previous, [key]: value }));
+    setError("");
   }
 
   async function submit() {
@@ -1349,40 +1283,38 @@ function PostEditor({
       setError(
         cause instanceof Error
           ? cause.message
-          : 'Não foi possível salvar a postagem.',
+          : "Não foi possível salvar a postagem.",
       );
     }
   }
 
   return (
     <FormFrame
-      title={creating ? 'Nova postagem' : 'Editar postagem'}
-      subtitle="Compartilhe o que dá certo na sua terra. Cada registro ajuda uma boa ideia a criar raízes."
+      title={creating ? "Nova postagem" : "Editar postagem"}
+      subtitle={t(
+        "Compartilhe o que dá certo na sua terra. Cada registro ajuda uma boa ideia a criar raízes.",
+      )}
       onClose={onClose}
       onSave={() => {
         void submit();
       }}
       saving={saving}
-      submitLabel={
-        creating ? 'Publicar registro' : 'Salvar postagem'
-      }
+      submitLabel={creating ? "Publicar registro" : "Salvar postagem"}
       error={error}
     >
       <Section title="A história do seu registro">
         <Photo
           uri={draft.imageUri}
           coverText={draft.coverText}
-          onChange={value => change('imageUri', value)}
+          onChange={(value) => change("imageUri", value)}
         />
 
         <Field
           label={
-            draft.imageUri
-              ? 'Texto da capa (opcional)'
-              : 'Texto da capa *'
+            draft.imageUri ? "Texto da capa (opcional)" : "Texto da capa *"
           }
           value={draft.coverText}
-          onChangeText={value => change('coverText', value)}
+          onChangeText={(value) => change("coverText", value)}
           placeholder="Ex.: Milho em Linha"
           maxLength={70}
           hint="Aparece no lugar da foto quando o registro não tem imagem."
@@ -1391,7 +1323,7 @@ function PostEditor({
         <Field
           label="Título da postagem *"
           value={draft.title}
-          onChangeText={value => change('title', value)}
+          onChangeText={(value) => change("title", value)}
           placeholder="Ex.: Cultivo de Milho em Linha"
           maxLength={100}
         />
@@ -1399,7 +1331,7 @@ function PostEditor({
         <Field
           label="Selo do card *"
           value={draft.badge}
-          onChangeText={value => change('badge', value)}
+          onChangeText={(value) => change("badge", value)}
           placeholder="Ex.: Boas técnicas"
           maxLength={30}
         />
@@ -1407,7 +1339,7 @@ function PostEditor({
         <Field
           label="Tipo de registro *"
           value={draft.category}
-          onChangeText={value => change('category', value)}
+          onChangeText={(value) => change("category", value)}
           placeholder="Ex.: Registro de Campo"
           maxLength={45}
         />
@@ -1415,7 +1347,7 @@ function PostEditor({
         <Field
           label="Região ou bioma *"
           value={draft.biome}
-          onChangeText={value => change('biome', value)}
+          onChangeText={(value) => change("biome", value)}
           placeholder="Ex.: Semiárido"
           maxLength={50}
         />
@@ -1425,38 +1357,34 @@ function PostEditor({
         <PriorityPicker
           label="Técnicas e prioridades *"
           value={draft.priorities}
-          onChange={value => change('priorities', value)}
+          onChange={(value) => change("priorities", value)}
         />
 
         <Field
           label="Legenda e observações *"
           value={draft.notes}
-          onChangeText={value => change('notes', value)}
+          onChangeText={(value) => change("notes", value)}
           multiline
           maxLength={2000}
           placeholder="Descreva a prática, como foi realizada e o que você observou…"
-          hint={`${draft.notes.length}/2000 caracteres`}
+          hint={`${draft.notes.length}/2000 ${t("caracteres")}`}
         />
 
         <View style={e.switchRow}>
           <View style={e.flex}>
-            <Text style={u.label}>Marcar como favorito</Text>
-            <Text style={u.hint}>
-              Destaca o coração deste registro.
-            </Text>
+            <Text style={u.label}>{t("Marcar como favorito")}</Text>
+            <Text style={u.hint}>{t("Destaca o coração deste registro.")}</Text>
           </View>
 
           <Switch
-            accessibilityLabel="Marcar como favorito"
+            accessibilityLabel={t("Marcar como favorito")}
             value={draft.liked}
-            onValueChange={value => change('liked', value)}
+            onValueChange={(value) => change("liked", value)}
             trackColor={{
-              false: '#5a6854',
-              true: '#ac7b32',
+              false: "#5a6854",
+              true: "#ac7b32",
             }}
-            thumbColor={
-              draft.liked ? palette.yellow : '#d6ded1'
-            }
+            thumbColor={draft.liked ? palette.yellow : "#d6ded1"}
           />
         </View>
       </Section>
@@ -1466,42 +1394,43 @@ function PostEditor({
           <PostVisual post={draft}>
             <View style={e.previewBadge}>
               <Text style={e.previewBadgeText}>
-                ϟ {(draft.badge || 'Boas técnicas').toUpperCase()}
+                ϟ{" "}
+                {(
+                  displayPostText(draft, "badge", t) || t("Boas técnicas")
+                ).toUpperCase()}
               </Text>
             </View>
 
             <LinearGradient
-              colors={[
-                'transparent',
-                'rgba(18,38,30,0.98)',
-              ]}
+              colors={["transparent", "rgba(18,38,30,0.98)"]}
               style={e.previewTitle}
             >
               <Text style={e.previewCategory}>
-                {draft.category || 'Registro de Campo'} •{' '}
-                {draft.biome || 'Região'}
+                {displayPostText(draft, "category", t) ||
+                  t("Registro de Campo")}{" "}
+                • {displayPostText(draft, "biome", t) || t("Região")}
               </Text>
 
               <Text style={e.previewHeading}>
-                {draft.title || 'Título da sua postagem'}
-                {draft.liked ? ' ♥' : ''}
+                {displayPostText(draft, "title", t) ||
+                  t("Título da sua postagem")}
+                {draft.liked ? " ♥" : ""}
               </Text>
             </LinearGradient>
           </PostVisual>
 
           <View style={e.previewBody}>
             <View style={u.wrap}>
-              {draft.priorities.map(priority => (
+              {draft.priorities.map((priority) => (
                 <Chip key={priority} priority={priority} />
               ))}
             </View>
 
-            <Text style={e.previewCategory}>
-              LEGENDA & OBSERVAÇÕES
-            </Text>
+            <Text style={e.previewCategory}>{t("LEGENDA & OBSERVAÇÕES")}</Text>
 
             <Text style={e.previewNotes}>
-              {draft.notes || 'Suas observações aparecem aqui.'}
+              {displayPostText(draft, "notes", t) ||
+                t("Suas observações aparecem aqui.")}
             </Text>
           </View>
         </View>
@@ -1521,12 +1450,13 @@ function CaptionEditor({
   onSave: (notes: string) => Promise<void>;
   saving: boolean;
 }) {
+  const { t } = useLanguage();
   const [notes, setNotes] = useState(post.notes);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   async function submit() {
     if (!notes.trim()) {
-      setError('Escreva a legenda e as observações.');
+      setError("Escreva a legenda e as observações.");
       return;
     }
 
@@ -1536,7 +1466,7 @@ function CaptionEditor({
       setError(
         cause instanceof Error
           ? cause.message
-          : 'Não foi possível salvar a legenda.',
+          : "Não foi possível salvar a legenda.",
       );
     }
   }
@@ -1544,7 +1474,7 @@ function CaptionEditor({
   return (
     <FormFrame
       title="Editar legenda"
-      subtitle={post.title}
+      subtitle={displayPostText(post, "title", t)}
       onClose={onClose}
       onSave={() => {
         void submit();
@@ -1559,11 +1489,11 @@ function CaptionEditor({
         autoFocus
         value={notes}
         maxLength={2000}
-        onChangeText={value => {
+        onChangeText={(value) => {
           setNotes(value);
-          setError('');
+          setError("");
         }}
-        hint={`${notes.length}/2000 caracteres`}
+        hint={`${notes.length}/2000 ${t("caracteres")}`}
         style={{ minHeight: 210 }}
       />
     </FormFrame>
@@ -1573,16 +1503,16 @@ function CaptionEditor({
 /* Perfil e galeria */
 
 type Screen =
-  | { kind: 'profile' }
-  | { kind: 'detail'; id: string }
-  | { kind: 'profile-editor' }
+  | { kind: "profile" }
+  | { kind: "detail"; id: string }
+  | { kind: "profile-editor" }
   | {
-      kind: 'post-editor';
+      kind: "post-editor";
       post: FieldPost;
       creating: boolean;
       returnId?: string;
     }
-  | { kind: 'caption-editor'; id: string };
+  | { kind: "caption-editor"; id: string };
 
 function ProfileHeader({
   profile,
@@ -1591,17 +1521,17 @@ function ProfileHeader({
   profile: FarmerProfile;
   onEdit: () => void;
 }) {
-  const [failedUri, setFailedUri] = useState('');
+  const { t } = useLanguage();
+  const [failedUri, setFailedUri] = useState("");
 
   return (
     <View style={s.profileHeader}>
       <View style={s.avatar}>
-        {profile.avatarUri &&
-        failedUri !== profile.avatarUri ? (
+        {profile.avatarUri && failedUri !== profile.avatarUri ? (
           <Image
             source={{ uri: profile.avatarUri }}
             style={s.avatarImage}
-            accessibilityLabel={`Foto de ${profile.name}`}
+            accessibilityLabel={`${t("Foto de")} ${profile.name}`}
             onError={() => setFailedUri(profile.avatarUri)}
           />
         ) : (
@@ -1617,67 +1547,60 @@ function ProfileHeader({
         <Text style={s.location}>
           {profile.location}
           <Text style={s.locationDot}> • </Text>
-          {profile.biome}
+          {t(profile.biome)}
         </Text>
 
         <Text numberOfLines={2} style={s.bio}>
-          {profile.bio ||
-            'Cultivando histórias e compartilhando boas práticas.'}
+          {profile.bio
+            ? profile.bio === INITIAL_DATA.profile.bio
+              ? t(profile.bio)
+              : profile.bio
+            : t("Cultivando histórias e compartilhando boas práticas.")}
         </Text>
       </View>
 
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Editar perfil"
+        accessibilityLabel={t("Editar perfil")}
         onPress={onEdit}
-        style={({ pressed }) => [
-          s.editButton,
-          pressed && { opacity: 0.7 },
-        ]}
+        style={({ pressed }) => [s.editButton, pressed && { opacity: 0.7 }]}
       >
-        <Ionicons
-          name="pencil-outline"
-          size={14}
-          color="#f4dfa1"
-        />
-        <Text style={s.editButtonText}>Editar</Text>
+        <Ionicons name="pencil-outline" size={14} color="#f4dfa1" />
+        <Text style={s.editButtonText}>{t("Editar")}</Text>
       </Pressable>
     </View>
   );
 }
 
 function FarmStats({ profile }: { profile: FarmerProfile }) {
+  const { t, locale } = useLanguage();
   const stats = [
     {
-      icon: 'location' as const,
-      color: '#b8ca64',
-      label: 'Área:',
-      value: `${profile.areaHa.replace('.', ',')} ha`,
+      icon: "location" as const,
+      color: "#b8ca64",
+      label: "Área:",
+      value: `${new Intl.NumberFormat(locale).format(Number(profile.areaHa))} ha`,
     },
     {
-      icon: 'map' as const,
-      color: '#e1bd7c',
-      label: 'Solo:',
-      value: profile.soil,
+      icon: "map" as const,
+      color: "#e1bd7c",
+      label: "Solo:",
+      value: t(profile.soil),
     },
     {
-      icon: 'water' as const,
-      color: '#8fcce1',
-      label: 'Irrigação:',
-      value: profile.irrigation,
+      icon: "water" as const,
+      color: "#8fcce1",
+      label: "Irrigação:",
+      value: t(profile.irrigation),
     },
   ];
 
   return (
     <View style={s.stats}>
-      {stats.map(stat => (
+      {stats.map((stat) => (
         <View key={stat.label} style={s.statCard}>
-          <Ionicons
-            name={stat.icon}
-            size={27}
-            color={stat.color}
-          />
-          <Text style={s.statLabel}>{stat.label}</Text>
+          <Ionicons name={stat.icon} size={27} color={stat.color} />
+          <Text style={s.statLabel}>{t(stat.label)}</Text>
           <Text style={s.statValue}>{stat.value}</Text>
         </View>
       ))}
@@ -1694,13 +1617,14 @@ function PostGrid({
   onOpen: (id: string) => void;
   tileSize: number;
 }) {
+  const { t } = useLanguage();
   return (
     <View style={s.grid}>
-      {posts.map(post => (
+      {posts.map((post) => (
         <Pressable
           key={post.id}
           accessibilityRole="button"
-          accessibilityLabel={`Abrir postagem: ${post.title}`}
+          accessibilityLabel={`${t("Abrir postagem:")} ${displayPostText(post, "title", t)}`}
           onPress={() => onOpen(post.id)}
           style={({ pressed }) => [
             s.gridItem,
@@ -1714,14 +1638,11 @@ function PostGrid({
           <PostVisual post={post} mini />
 
           <LinearGradient
-            colors={[
-              'transparent',
-              'rgba(5,16,13,0.84)',
-            ]}
+            colors={["transparent", "rgba(5,16,13,0.84)"]}
             style={s.gridCaption}
           >
             <Text numberOfLines={1} style={s.gridTitle}>
-              {post.title}
+              {displayPostText(post, "title", t)}
             </Text>
           </LinearGradient>
         </Pressable>
@@ -1729,16 +1650,12 @@ function PostGrid({
 
       {!posts.length && (
         <View style={s.empty}>
-          <Ionicons
-            name="leaf-outline"
-            size={36}
-            color={palette.yellow}
-          />
+          <Ionicons name="leaf-outline" size={36} color={palette.yellow} />
           <Text style={s.emptyTitle}>
-            Cada história começa com uma semente.
+            {t("Cada história começa com uma semente.")}
           </Text>
           <Text style={s.helper}>
-            Crie seu primeiro registro de campo.
+            {t("Crie seu primeiro registro de campo.")}
           </Text>
         </View>
       )}
@@ -1765,14 +1682,13 @@ function PostDetails({
   onCaption: (id: string) => void;
   onEdit: (post: FieldPost) => void;
 }) {
-  const index = posts.findIndex(post => post.id === id);
+  const { t } = useLanguage();
+  const index = posts.findIndex((post) => post.id === id);
   const post = posts[index];
 
-  const thumbnails =
-    useRef<React.ComponentRef<typeof ScrollView>>(null);
+  const thumbnails = useRef<React.ComponentRef<typeof ScrollView>>(null);
 
-  const details =
-    useRef<React.ComponentRef<typeof ScrollView>>(null);
+  const details = useRef<React.ComponentRef<typeof ScrollView>>(null);
 
   useEffect(() => {
     thumbnails.current?.scrollTo({
@@ -1789,14 +1705,8 @@ function PostDetails({
   if (!post) {
     return (
       <View style={s.empty}>
-        <Text style={s.emptyTitle}>
-          Registro não encontrado.
-        </Text>
-        <Action
-          label="Voltar ao perfil"
-          onPress={onClose}
-          compact
-        />
+        <Text style={s.emptyTitle}>{t("Registro não encontrado.")}</Text>
+        <Action label="Voltar ao perfil" onPress={onClose} compact />
       </View>
     );
   }
@@ -1822,9 +1732,9 @@ function PostDetails({
           <PostVisual post={post}>
             <LinearGradient
               colors={[
-                'rgba(0,0,0,0.22)',
-                'transparent',
-                'rgba(21,41,33,0.98)',
+                "rgba(0,0,0,0.22)",
+                "transparent",
+                "rgba(21,41,33,0.98)",
               ]}
               locations={[0, 0.4, 1]}
               style={StyleSheet.absoluteFill}
@@ -1832,17 +1742,10 @@ function PostDetails({
 
             <View style={s.heroTop}>
               <View style={s.badge}>
-                <Ionicons
-                  name="flash"
-                  size={15}
-                  color={palette.yellow}
-                />
+                <Ionicons name="flash" size={15} color={palette.yellow} />
 
-                <Text
-                  numberOfLines={1}
-                  style={s.badgeText}
-                >
-                  {post.badge.toUpperCase()}
+                <Text numberOfLines={1} style={s.badgeText}>
+                  {displayPostText(post, "badge", t).toUpperCase()}
                 </Text>
               </View>
 
@@ -1854,23 +1757,16 @@ function PostDetails({
 
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Voltar ao perfil"
+                accessibilityLabel={t("Voltar ao perfil")}
                 onPress={onClose}
                 style={s.backPill}
               >
-                <Ionicons
-                  name="chevron-back"
-                  size={16}
-                  color={palette.text}
-                />
-                <Text style={s.counterText}>Perfil</Text>
+                <Ionicons name="chevron-back" size={16} color={palette.text} />
+                <Text style={s.counterText}>{t("Perfil")}</Text>
               </Pressable>
             </View>
 
-            <View
-              style={s.heroArrows}
-              pointerEvents="box-none"
-            >
+            <View style={s.heroArrows} pointerEvents="box-none">
               <IconButton
                 name="chevron-back"
                 label="Foto anterior"
@@ -1889,26 +1785,21 @@ function PostDetails({
             <View style={s.heroBottom}>
               <View style={s.heroTitleBlock}>
                 <Text style={s.category}>
-                  {post.category.toUpperCase()} •{' '}
-                  {post.biome.toUpperCase()}
+                  {displayPostText(post, "category", t).toUpperCase()} •{" "}
+                  {displayPostText(post, "biome", t).toUpperCase()}
                 </Text>
 
-                <Text
-                  accessibilityRole="header"
-                  style={s.postTitle}
-                >
-                  {post.title}
+                <Text accessibilityRole="header" style={s.postTitle}>
+                  {displayPostText(post, "title", t)}
                 </Text>
               </View>
 
               <IconButton
-                name={
-                  post.liked ? 'heart' : 'heart-outline'
-                }
+                name={post.liked ? "heart" : "heart-outline"}
                 label={
                   post.liked
-                    ? 'Remover dos favoritos'
-                    : 'Adicionar aos favoritos'
+                    ? "Remover dos favoritos"
+                    : "Adicionar aos favoritos"
                 }
                 active={post.liked}
                 onPress={() => onLike(post.id)}
@@ -1920,35 +1811,27 @@ function PostDetails({
 
         <View style={s.detailBody}>
           <View style={u.wrap}>
-            {post.priorities.map(priority => (
+            {post.priorities.map((priority) => (
               <Chip key={priority} priority={priority} />
             ))}
           </View>
 
           <View style={s.notesBox}>
             <View style={s.notesHeading}>
-              <Text style={s.notesLabel}>
-                LEGENDA & OBSERVAÇÕES
-              </Text>
+              <Text style={s.notesLabel}>{t("LEGENDA & OBSERVAÇÕES")}</Text>
 
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Editar legenda"
+                accessibilityLabel={t("Editar legenda")}
                 onPress={() => onCaption(post.id)}
                 style={s.editNotes}
               >
-                <Ionicons
-                  name="pencil-outline"
-                  size={16}
-                  color="#f0d885"
-                />
-                <Text style={s.editNotesText}>
-                  Editar legenda
-                </Text>
+                <Ionicons name="pencil-outline" size={16} color="#f0d885" />
+                <Text style={s.editNotesText}>{t("Editar legenda")}</Text>
               </Pressable>
             </View>
 
-            <Text style={s.notes}>{post.notes}</Text>
+            <Text style={s.notes}>{displayPostText(post, "notes", t)}</Text>
           </View>
 
           <View style={s.detailDivider} />
@@ -1963,15 +1846,14 @@ function PostDetails({
               <Pressable
                 key={item.id}
                 accessibilityRole="button"
-                accessibilityLabel={`Ver postagem ${itemIndex + 1}: ${item.title}`}
+                accessibilityLabel={`${t("Ver postagem")} ${itemIndex + 1}: ${displayPostText(item, "title", t)}`}
                 accessibilityState={{
                   selected: item.id === post.id,
                 }}
                 onPress={() => onSelect(item.id)}
                 style={[
                   s.thumbnail,
-                  item.id === post.id &&
-                    s.selectedThumbnail,
+                  item.id === post.id && s.selectedThumbnail,
                 ]}
               >
                 <PostVisual post={item} mini />
@@ -2007,18 +1889,12 @@ function PostDetails({
 
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Editar postagem completa"
+            accessibilityLabel={t("Editar postagem completa")}
             onPress={() => onEdit(post)}
             style={s.editFullPost}
           >
-            <Ionicons
-              name="create-outline"
-              color={palette.muted}
-              size={16}
-            />
-            <Text style={s.editFullText}>
-              Editar postagem completa
-            </Text>
+            <Ionicons name="create-outline" color={palette.muted} size={16} />
+            <Text style={s.editFullText}>{t("Editar postagem completa")}</Text>
           </Pressable>
         </View>
       </View>
@@ -2028,11 +1904,20 @@ function PostDetails({
 
 /* Tela principal */
 
-export default function ProfileScreen() {
+export default function ProfileScreen({
+  navigation,
+}: {
+  navigation: {
+    canGoBack: () => boolean;
+    goBack: () => void;
+    navigate: (name: string) => void;
+  };
+}) {
+  const { t } = useLanguage();
   const store = useProfileStore();
 
   const [screen, setScreen] = useState<Screen>({
-    kind: 'profile',
+    kind: "profile",
   });
 
   const { width } = useWindowDimensions();
@@ -2043,54 +1928,66 @@ export default function ProfileScreen() {
   function back() {
     if (store.saving) return;
 
-    if (screen.kind === 'caption-editor') {
+    if (screen.kind === "caption-editor") {
       setScreen({
-        kind: 'detail',
+        kind: "detail",
         id: screen.id,
       });
-    } else if (
-      screen.kind === 'post-editor' &&
-      screen.returnId
-    ) {
+    } else if (screen.kind === "post-editor" && screen.returnId) {
       setScreen({
-        kind: 'detail',
+        kind: "detail",
         id: screen.returnId,
       });
     } else {
-      setScreen({ kind: 'profile' });
+      setScreen({ kind: "profile" });
     }
   }
 
   async function saveProfile(value: FarmerProfile) {
     await store.saveProfile(value);
-    setScreen({ kind: 'profile' });
+    setScreen({ kind: "profile" });
   }
 
   async function savePost(value: FieldPost) {
     await store.savePost(value);
-    setScreen({ kind: 'detail', id: value.id });
+    setScreen({ kind: "detail", id: value.id });
   }
 
   return (
     <LinearGradient
-      colors={['#646c27', '#354e34', '#1b3539']}
+      colors={["#646c27", "#354e34", "#1b3539"]}
       locations={[0, 0.48, 1]}
       style={s.root}
     >
       <StatusBar barStyle="light-content" />
 
-      <SafeAreaView
-        style={[s.page, { width: pageWidth }]}
-      >
+      <SafeAreaView style={[s.page, { width: pageWidth }]}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 10,
+            paddingHorizontal: 18,
+            paddingTop: 8,
+          }}
+        >
+          <IconButton
+            name="arrow-back"
+            label="Voltar"
+            onPress={() =>
+              navigation.canGoBack()
+                ? navigation.goBack()
+                : navigation.navigate("Home")
+            }
+          />
+          <Text accessibilityRole="header" style={s.sectionTitle}>
+            {t("Perfil")}
+          </Text>
+        </View>
         {store.loading ? (
           <View style={s.loading}>
-            <ActivityIndicator
-              size="large"
-              color={palette.yellow}
-            />
-            <Text style={s.helper}>
-              Preparando seu campo…
-            </Text>
+            <ActivityIndicator size="large" color={palette.yellow} />
+            <Text style={s.helper}>{t("Preparando seu campo…")}</Text>
           </View>
         ) : (
           <ScrollView
@@ -2099,9 +1996,7 @@ export default function ProfileScreen() {
           >
             <ProfileHeader
               profile={profile}
-              onEdit={() =>
-                setScreen({ kind: 'profile-editor' })
-              }
+              onEdit={() => setScreen({ kind: "profile-editor" })}
             />
 
             <View style={s.headerDivider} />
@@ -2115,16 +2010,11 @@ export default function ProfileScreen() {
             <FarmStats profile={profile} />
 
             <View style={s.prioritiesPanel}>
-              <Text style={s.sectionTitle}>
-                Prioridades Agrícolas
-              </Text>
+              <Text style={s.sectionTitle}>{t("Prioridades Agrícolas")}</Text>
 
               <View style={u.wrap}>
-                {profile.priorities.map(priority => (
-                  <Chip
-                    key={priority}
-                    priority={priority}
-                  />
+                {profile.priorities.map((priority) => (
+                  <Chip key={priority} priority={priority} />
                 ))}
               </View>
             </View>
@@ -2142,27 +2032,25 @@ export default function ProfileScreen() {
                       },
                     ]}
                   >
-                    Registros de Campo
+                    {t("Registros de Campo")}
                   </Text>
 
                   <View style={s.countBadge}>
-                    <Text style={s.countText}>
-                      {store.data.posts.length}
-                    </Text>
+                    <Text style={s.countText}>{store.data.posts.length}</Text>
                   </View>
                 </View>
 
                 <Text style={s.helper}>
-                  Toque em uma foto para ver as boas técnicas.
+                  {t("Toque em uma foto para ver as boas técnicas.")}
                 </Text>
               </View>
 
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Nova postagem"
+                accessibilityLabel={t("Nova postagem")}
                 onPress={() =>
                   setScreen({
-                    kind: 'post-editor',
+                    kind: "post-editor",
                     post: newPost(profile),
                     creating: true,
                   })
@@ -2174,22 +2062,17 @@ export default function ProfileScreen() {
                 ]}
               >
                 <LinearGradient
-                  colors={[
-                    palette.yellow,
-                    palette.yellowDark,
-                  ]}
+                  colors={[palette.yellow, palette.yellowDark]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={s.newPostGradient}
                 >
-                  <Ionicons
-                    name="add"
-                    size={23}
-                    color={palette.ink}
-                  />
+                  <Ionicons name="add" size={23} color={palette.ink} />
 
                   <Text style={s.newPostText}>
-                    Nova{'\n'}Postagem
+                    {t("Nova")}
+                    {"\n"}
+                    {t("Postagem")}
                   </Text>
                 </LinearGradient>
               </Pressable>
@@ -2197,9 +2080,7 @@ export default function ProfileScreen() {
 
             <PostGrid
               posts={store.data.posts}
-              onOpen={id =>
-                setScreen({ kind: 'detail', id })
-              }
+              onOpen={(id) => setScreen({ kind: "detail", id })}
               tileSize={tileSize}
             />
           </ScrollView>
@@ -2207,22 +2088,20 @@ export default function ProfileScreen() {
       </SafeAreaView>
 
       <Modal
-        visible={screen.kind !== 'profile'}
+        visible={screen.kind !== "profile"}
         animationType="slide"
         onRequestClose={back}
         presentationStyle="fullScreen"
       >
         <LinearGradient
-          colors={['#525e24', '#253c31', '#1b3337']}
+          colors={["#525e24", "#253c31", "#1b3337"]}
           locations={[0, 0.48, 1]}
           style={s.root}
         >
           <StatusBar barStyle="light-content" />
 
-          <SafeAreaView
-            style={[s.page, { width: pageWidth }]}
-          >
-            {screen.kind === 'detail' && (
+          <SafeAreaView style={[s.page, { width: pageWidth }]}>
+            {screen.kind === "detail" && (
               <>
                 {!!store.error && (
                   <View
@@ -2239,26 +2118,20 @@ export default function ProfileScreen() {
                   posts={store.data.posts}
                   id={screen.id}
                   saving={store.saving}
-                  onSelect={id =>
-                    setScreen({ kind: 'detail', id })
-                  }
-                  onClose={() =>
-                    setScreen({ kind: 'profile' })
-                  }
-                  onLike={id => {
-                    void store
-                      .toggleLike(id)
-                      .catch(() => undefined);
+                  onSelect={(id) => setScreen({ kind: "detail", id })}
+                  onClose={() => setScreen({ kind: "profile" })}
+                  onLike={(id) => {
+                    void store.toggleLike(id).catch(() => undefined);
                   }}
-                  onCaption={id =>
+                  onCaption={(id) =>
                     setScreen({
-                      kind: 'caption-editor',
+                      kind: "caption-editor",
                       id,
                     })
                   }
-                  onEdit={post =>
+                  onEdit={(post) =>
                     setScreen({
-                      kind: 'post-editor',
+                      kind: "post-editor",
                       post,
                       creating: false,
                       returnId: post.id,
@@ -2268,7 +2141,7 @@ export default function ProfileScreen() {
               </>
             )}
 
-            {screen.kind === 'profile-editor' && (
+            {screen.kind === "profile-editor" && (
               <ProfileEditor
                 profile={profile}
                 onClose={back}
@@ -2277,7 +2150,7 @@ export default function ProfileScreen() {
               />
             )}
 
-            {screen.kind === 'post-editor' && (
+            {screen.kind === "post-editor" && (
               <PostEditor
                 key={screen.post.id}
                 post={screen.post}
@@ -2288,10 +2161,10 @@ export default function ProfileScreen() {
               />
             )}
 
-            {screen.kind === 'caption-editor' &&
+            {screen.kind === "caption-editor" &&
               (() => {
                 const post = store.data.posts.find(
-                  item => item.id === screen.id,
+                  (item) => item.id === screen.id,
                 );
 
                 return (
@@ -2300,11 +2173,11 @@ export default function ProfileScreen() {
                       post={post}
                       onClose={back}
                       saving={store.saving}
-                      onSave={async notes => {
+                      onSave={async (notes) => {
                         await store.setNotes(post.id, notes);
 
                         setScreen({
-                          kind: 'detail',
+                          kind: "detail",
                           id: post.id,
                         });
                       }}
@@ -2323,28 +2196,28 @@ export default function ProfileScreen() {
 
 const u = StyleSheet.create({
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
   },
   wrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 9,
   },
   actionShell: {
     flex: 1,
     borderRadius: 18,
-    overflow: 'hidden',
+    overflow: "hidden",
     minWidth: 0,
   },
   action: {
     minHeight: 48,
     paddingHorizontal: 16,
     paddingVertical: 11,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: 8,
     borderRadius: 18,
   },
@@ -2354,40 +2227,40 @@ const u = StyleSheet.create({
   },
   actionText: {
     color: palette.ink,
-    fontWeight: '700',
+    fontWeight: "700",
     fontSize: 15,
-    textAlign: 'center',
+    textAlign: "center",
     flexShrink: 1,
   },
   iconButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(10,22,16,0.65)',
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(10,22,16,0.65)",
     borderWidth: 1,
     borderColor: palette.stroke,
   },
   activeIcon: {
-    backgroundColor: 'rgba(154,67,87,0.45)',
-    borderColor: '#b76b7b',
+    backgroundColor: "rgba(154,67,87,0.45)",
+    borderColor: "#b76b7b",
   },
   chip: {
     borderWidth: 1,
     borderRadius: 22,
     paddingHorizontal: 12,
     paddingVertical: 7,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 5,
   },
   chipText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   unselectedChip: {
-    backgroundColor: 'rgba(255,255,255,0.03)',
+    backgroundColor: "rgba(255,255,255,0.03)",
     borderColor: palette.stroke,
   },
   field: {
@@ -2396,13 +2269,13 @@ const u = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     color: palette.text,
   },
   input: {
     borderWidth: 1,
     borderColor: palette.stroke,
-    backgroundColor: 'rgba(3,22,17,0.3)',
+    backgroundColor: "rgba(3,22,17,0.3)",
     color: palette.text,
     borderRadius: 14,
     minHeight: 50,
@@ -2412,7 +2285,7 @@ const u = StyleSheet.create({
   },
   textarea: {
     minHeight: 120,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
     lineHeight: 24,
   },
   hint: {
@@ -2426,24 +2299,24 @@ const u = StyleSheet.create({
   sectionLabel: {
     color: palette.yellow,
     fontSize: 12,
-    fontWeight: '800',
-    textTransform: 'uppercase',
+    fontWeight: "800",
+    textTransform: "uppercase",
     letterSpacing: 1.2,
     marginBottom: 18,
     marginTop: 12,
   },
   errorBox: {
     borderRadius: 14,
-    backgroundColor: '#633f30',
+    backgroundColor: "#633f30",
     borderWidth: 1,
-    borderColor: '#ac7357',
+    borderColor: "#ac7357",
     padding: 12,
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 8,
     marginBottom: 12,
   },
   errorText: {
-    color: '#ffe2d1',
+    color: "#ffe2d1",
     flex: 1,
     lineHeight: 20,
     fontSize: 13,
@@ -2451,12 +2324,12 @@ const u = StyleSheet.create({
   photoPreview: {
     height: 170,
     borderRadius: 18,
-    overflow: 'hidden',
-    backgroundColor: '#3c4b26',
+    overflow: "hidden",
+    backgroundColor: "#3c4b26",
     borderWidth: 1,
     borderColor: palette.stroke,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     gap: 10,
   },
   avatarPreview: {
@@ -2465,35 +2338,35 @@ const u = StyleSheet.create({
     borderRadius: 55,
     borderColor: palette.yellow,
     borderWidth: 3,
-    alignSelf: 'center',
+    alignSelf: "center",
   },
   visual: {
     flex: 1,
-    backgroundColor: '#394a21',
-    position: 'relative',
-    overflow: 'hidden',
+    backgroundColor: "#394a21",
+    position: "relative",
+    overflow: "hidden",
   },
   coverFallback: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     bottom: 0,
     left: 0,
     right: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     padding: 30,
   },
   coverText: {
     fontSize: 37,
     lineHeight: 44,
-    fontWeight: '600',
-    textAlign: 'center',
-    color: '#f6f3dd',
+    fontWeight: "600",
+    textAlign: "center",
+    color: "#f6f3dd",
   },
   miniCoverText: {
     fontSize: 9,
     lineHeight: 13,
-    fontWeight: '500',
+    fontWeight: "500",
   },
 });
 
@@ -2504,8 +2377,8 @@ const e = StyleSheet.create({
     flex: 1,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 14,
     paddingHorizontal: 22,
     paddingVertical: 20,
@@ -2515,13 +2388,13 @@ const e = StyleSheet.create({
   eyebrow: {
     fontSize: 9,
     letterSpacing: 1.8,
-    fontWeight: '700',
-    color: '#d7cd96',
+    fontWeight: "700",
+    color: "#d7cd96",
     marginBottom: 5,
   },
   title: {
     fontSize: 25,
-    fontWeight: '800',
+    fontWeight: "800",
     color: palette.text,
     letterSpacing: -0.6,
   },
@@ -2536,12 +2409,12 @@ const e = StyleSheet.create({
     marginBottom: 18,
   },
   footer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
     padding: 16,
     borderTopWidth: 1,
     borderTopColor: palette.stroke,
-    backgroundColor: 'rgba(19,38,32,0.95)',
+    backgroundColor: "rgba(19,38,32,0.95)",
   },
   option: {
     borderRadius: 12,
@@ -2549,19 +2422,19 @@ const e = StyleSheet.create({
     borderColor: palette.stroke,
     paddingHorizontal: 11,
     paddingVertical: 9,
-    backgroundColor: 'rgba(255,255,255,0.03)',
+    backgroundColor: "rgba(255,255,255,0.03)",
   },
   selectedOption: {
-    borderColor: '#b59f53',
-    backgroundColor: '#5c5528',
+    borderColor: "#b59f53",
+    backgroundColor: "#5c5528",
   },
   optionText: {
     color: palette.muted,
     fontSize: 12,
   },
   switchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 16,
     marginBottom: 24,
   },
@@ -2569,28 +2442,28 @@ const e = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
     borderColor: palette.stroke,
-    overflow: 'hidden',
-    backgroundColor: '#20332e',
+    overflow: "hidden",
+    backgroundColor: "#20332e",
     marginBottom: 20,
   },
   previewBadge: {
-    position: 'absolute',
+    position: "absolute",
     top: 16,
     left: 16,
-    backgroundColor: '#405524',
+    backgroundColor: "#405524",
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderWidth: 1,
-    borderColor: '#ba9b47',
+    borderColor: "#ba9b47",
   },
   previewBadgeText: {
-    color: '#ffe29c',
+    color: "#ffe29c",
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: "800",
   },
   previewTitle: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
@@ -2598,16 +2471,16 @@ const e = StyleSheet.create({
     paddingTop: 70,
   },
   previewCategory: {
-    color: '#dfca78',
+    color: "#dfca78",
     fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'uppercase',
+    fontWeight: "700",
+    textTransform: "uppercase",
     marginTop: 14,
   },
   previewHeading: {
     color: palette.text,
     fontSize: 23,
-    fontWeight: '700',
+    fontWeight: "700",
     marginTop: 6,
   },
   previewBody: {
@@ -2626,7 +2499,7 @@ const e = StyleSheet.create({
 const s = StyleSheet.create({
   root: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
   },
   page: {
     flex: 1,
@@ -2634,8 +2507,8 @@ const s = StyleSheet.create({
   },
   loading: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     gap: 16,
   },
   profileScroll: {
@@ -2644,9 +2517,9 @@ const s = StyleSheet.create({
     paddingBottom: 34,
   },
   profileHeader: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 15,
-    alignItems: 'center',
+    alignItems: "center",
     minHeight: 110,
     paddingTop: 7,
   },
@@ -2656,14 +2529,14 @@ const s = StyleSheet.create({
     borderRadius: 50,
     borderWidth: 3,
     borderColor: palette.yellow,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    backgroundColor: '#8a9b50',
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+    backgroundColor: "#8a9b50",
   },
   avatarImage: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   profileInfo: {
     flex: 1,
@@ -2674,28 +2547,28 @@ const s = StyleSheet.create({
     color: palette.text,
     fontSize: 28,
     lineHeight: 33,
-    fontWeight: '800',
+    fontWeight: "800",
     letterSpacing: -0.9,
     paddingRight: 68,
   },
   location: {
-    color: '#ede9ce',
+    color: "#ede9ce",
     fontSize: 13,
     lineHeight: 20,
-    fontWeight: '700',
+    fontWeight: "700",
     marginTop: 5,
   },
   locationDot: {
-    color: '#c5c58a',
+    color: "#c5c58a",
   },
   bio: {
-    color: '#d6d7b4',
+    color: "#d6d7b4",
     fontSize: 13,
     lineHeight: 19,
     marginTop: 5,
   },
   editButton: {
-    position: 'absolute',
+    position: "absolute",
     right: 0,
     top: 1,
     borderRadius: 20,
@@ -2703,14 +2576,14 @@ const s = StyleSheet.create({
     paddingVertical: 7,
     borderWidth: 1,
     borderColor: palette.stroke,
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 5,
-    alignItems: 'center',
+    alignItems: "center",
   },
   editButtonText: {
-    color: '#f4dfa1',
+    color: "#f4dfa1",
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   headerDivider: {
     height: 1,
@@ -2718,8 +2591,8 @@ const s = StyleSheet.create({
     marginTop: 20,
   },
   dots: {
-    flexDirection: 'row',
-    alignSelf: 'center',
+    flexDirection: "row",
+    alignSelf: "center",
     gap: 9,
     marginTop: 13,
     marginBottom: 30,
@@ -2728,44 +2601,52 @@ const s = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: 'rgba(218,222,172,0.35)',
+    backgroundColor: "rgba(218,222,172,0.35)",
   },
   dotActive: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#f6e2a3',
+    backgroundColor: "#f6e2a3",
   },
   stats: {
-    flexDirection: 'row',
+    flexDirection: "row",
+    alignItems: "stretch",
     gap: 10,
     marginBottom: 35,
   },
   statCard: {
     flex: 1,
+    minWidth: 0,
     minHeight: 134,
-    backgroundColor: 'rgba(224,229,177,0.12)',
+    backgroundColor: "rgba(224,229,177,0.12)",
     borderRadius: 24,
     borderWidth: 1,
     borderColor: palette.stroke,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
+    alignItems: "center",
+    justifyContent: "flex-start",
     paddingVertical: 19,
     paddingHorizontal: 6,
   },
   statLabel: {
     color: palette.text,
     fontSize: 14,
-    fontWeight: '800',
+    fontWeight: "800",
     marginTop: 12,
+    width: "100%",
+    maxWidth: "100%",
+    flexShrink: 1,
+    textAlign: "center",
   },
   statValue: {
-    color: '#eef0da',
+    color: "#eef0da",
     fontSize: 14,
     lineHeight: 19,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 3,
     flexShrink: 1,
+    width: "100%",
+    maxWidth: "100%",
   },
   prioritiesPanel: {
     backgroundColor: palette.panel,
@@ -2779,12 +2660,12 @@ const s = StyleSheet.create({
   sectionTitle: {
     color: palette.text,
     fontSize: 17,
-    fontWeight: '800',
+    fontWeight: "800",
     letterSpacing: -0.5,
   },
   recordsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
     marginBottom: 30,
   },
@@ -2792,34 +2673,34 @@ const s = StyleSheet.create({
     flex: 1,
   },
   recordsTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
-    flexWrap: 'wrap',
+    flexWrap: "wrap",
     marginBottom: 4,
   },
   countBadge: {
     minWidth: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: 'rgba(226,224,173,0.17)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(226,224,173,0.17)",
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 6,
   },
   countText: {
-    color: '#f2d77d',
+    color: "#f2d77d",
     fontSize: 13,
-    fontWeight: '800',
+    fontWeight: "800",
   },
   helper: {
-    color: '#c2ccbf',
+    color: "#c2ccbf",
     fontSize: 13,
     lineHeight: 19,
   },
   newPostButton: {
     borderRadius: 36,
-    overflow: 'hidden',
+    overflow: "hidden",
     width: 148,
     shadowColor: palette.yellow,
     shadowOpacity: 0.3,
@@ -2828,33 +2709,33 @@ const s = StyleSheet.create({
     elevation: 5,
   },
   newPostGradient: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     minHeight: 64,
     paddingHorizontal: 16,
   },
   newPostText: {
-    color: '#293220',
-    fontWeight: '800',
+    color: "#293220",
+    fontWeight: "800",
     fontSize: 15,
     lineHeight: 21,
-    textAlign: 'center',
+    textAlign: "center",
   },
   grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 10,
   },
   gridItem: {
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: 'rgba(245,244,216,0.5)',
-    overflow: 'hidden',
+    borderColor: "rgba(245,244,216,0.5)",
+    overflow: "hidden",
   },
   gridCaption: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
@@ -2864,20 +2745,20 @@ const s = StyleSheet.create({
   },
   gridTitle: {
     fontSize: 10,
-    fontWeight: '700',
-    color: '#fffdf1',
+    fontWeight: "700",
+    color: "#fffdf1",
   },
   empty: {
     paddingVertical: 40,
     gap: 12,
-    alignItems: 'center',
-    width: '100%',
+    alignItems: "center",
+    width: "100%",
   },
   emptyTitle: {
     fontSize: 17,
     color: palette.text,
-    fontWeight: '700',
-    textAlign: 'center',
+    fontWeight: "700",
+    textAlign: "center",
   },
   detailScroll: {
     padding: 12,
@@ -2885,77 +2766,77 @@ const s = StyleSheet.create({
   },
   detailCard: {
     borderWidth: 1,
-    borderColor: '#697254',
+    borderColor: "#697254",
     borderRadius: 32,
-    overflow: 'hidden',
-    backgroundColor: 'rgba(20,38,30,0.48)',
+    overflow: "hidden",
+    backgroundColor: "rgba(20,38,30,0.48)",
   },
   hero: {
     height: 334,
   },
   heroTop: {
-    position: 'absolute',
+    position: "absolute",
     top: 14,
     left: 14,
     right: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
   },
   badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 5,
-    backgroundColor: '#3e5429',
+    backgroundColor: "#3e5429",
     paddingHorizontal: 10,
     paddingVertical: 7,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#b7a052',
+    borderColor: "#b7a052",
     flexShrink: 1,
   },
   badgeText: {
-    color: '#fae3a0',
-    fontWeight: '800',
+    color: "#fae3a0",
+    fontWeight: "800",
     fontSize: 12,
     flexShrink: 1,
   },
   counter: {
-    marginLeft: 'auto',
+    marginLeft: "auto",
     borderRadius: 20,
-    backgroundColor: 'rgba(8,16,7,0.82)',
+    backgroundColor: "rgba(8,16,7,0.82)",
     paddingHorizontal: 10,
     paddingVertical: 7,
   },
   counterText: {
-    color: '#f4f5e9',
+    color: "#f4f5e9",
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   backPill: {
     borderRadius: 20,
-    backgroundColor: 'rgba(8,16,7,0.82)',
+    backgroundColor: "rgba(8,16,7,0.82)",
     paddingHorizontal: 9,
     minHeight: 32,
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 3,
-    alignItems: 'center',
+    alignItems: "center",
   },
   heroArrows: {
-    position: 'absolute',
+    position: "absolute",
     top: 143,
     left: 14,
     right: 14,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   heroBottom: {
-    position: 'absolute',
+    position: "absolute",
     left: 18,
     right: 18,
     bottom: 23,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
   },
   heroTitleBlock: {
@@ -2964,13 +2845,13 @@ const s = StyleSheet.create({
   category: {
     fontSize: 12,
     lineHeight: 17,
-    color: '#e0cc7d',
-    fontWeight: '800',
+    color: "#e0cc7d",
+    fontWeight: "800",
   },
   postTitle: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 23,
-    fontWeight: '800',
+    fontWeight: "800",
     letterSpacing: -0.55,
     lineHeight: 28,
     marginTop: 3,
@@ -2983,42 +2864,42 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: palette.stroke,
     borderRadius: 20,
-    backgroundColor: 'rgba(235,244,229,0.07)',
+    backgroundColor: "rgba(235,244,229,0.07)",
     padding: 15,
     gap: 10,
   },
   notesHeading: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     gap: 7,
-    flexWrap: 'wrap',
+    flexWrap: "wrap",
   },
   notesLabel: {
-    color: '#e6be58',
+    color: "#e6be58",
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: "800",
     letterSpacing: 0.2,
   },
   editNotes: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 5,
     minHeight: 28,
   },
   editNotesText: {
     fontSize: 12,
-    fontWeight: '700',
-    color: '#f0d885',
+    fontWeight: "700",
+    color: "#f0d885",
   },
   notes: {
-    color: '#f1f1e8',
+    color: "#f1f1e8",
     fontSize: 16,
     lineHeight: 25,
   },
   detailDivider: {
     height: 1,
-    backgroundColor: 'rgba(233,236,205,0.12)',
+    backgroundColor: "rgba(233,236,205,0.12)",
   },
   thumbnails: {
     gap: 7,
@@ -3030,20 +2911,20 @@ const s = StyleSheet.create({
     borderRadius: 11,
     borderWidth: 1,
     borderColor: palette.stroke,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   selectedThumbnail: {
     borderWidth: 3,
-    borderColor: '#e9c45c',
+    borderColor: "#e9c45c",
   },
   dimmed: {
-    backgroundColor: 'rgba(10,24,15,0.35)',
+    backgroundColor: "rgba(10,24,15,0.35)",
   },
   editFullPost: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 3,
     minHeight: 32,
   },

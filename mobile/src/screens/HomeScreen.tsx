@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   View,
   StyleSheet,
   ScrollView,
   SafeAreaView,
   StatusBar,
-  Alert,
   TouchableOpacity,
   useWindowDimensions,
   Text,
@@ -27,8 +26,15 @@ import { useAppLocation } from "../hooks/useLocation";
 import type { WeatherLocation } from "../types/weather";
 import { RecommendationRequest } from "../api/recommendation";
 import apiClient from "../api/client";
+import { useLanguage } from "../i18n/LanguageContext";
+import { useCropCalendar } from "../hooks/useCropCalendar";
+import HomeSheets, { type HomePanel } from "../components/home/HomeSheets";
 
-export default function HomeScreen({ navigation }: any) {
+export default function HomeScreen({ navigation, onEndSession }: any) {
+  const { t } = useLanguage();
+  const [panel, setPanel] = useState<HomePanel>(null);
+  const [analysisContext, setAnalysisContext] = useState<string | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const { fetchRecommendation, loading, data, error } = useRecommendation();
   const { width } = useWindowDimensions();
   const { state: weatherState, load: loadWeather } = useWeatherForecast();
@@ -50,7 +56,11 @@ export default function HomeScreen({ navigation }: any) {
     useState<RecommendationRequest["previous_crop"]>("Corn");
   const [isSheetVisible, setIsSheetVisible] = useState(false);
 
+  const calendar = useCropCalendar(selectedCrop, weatherLocation);
+  const analysisKey = `${selectedCrop}:${weatherLocation?.latitude}:${weatherLocation?.longitude}`;
+
   function chooseMunicipality() {
+    setPanel(null);
     cancelLocation();
     setIsLocationPickerVisible(true);
   }
@@ -72,6 +82,8 @@ export default function HomeScreen({ navigation }: any) {
   }
 
   const handleAnalyzeNASA = () => {
+    setAnalysisError(null);
+    setAnalysisContext(analysisKey);
     if (!weatherLocation) {
       chooseMunicipality();
       return;
@@ -81,8 +93,7 @@ export default function HomeScreen({ navigation }: any) {
       weatherLocation.origin === "gps" &&
       !/^https:\/\//i.test(apiClient.defaults.baseURL ?? "")
     ) {
-      Alert.alert(
-        "Conexão segura necessária",
+      setAnalysisError(
         "A análise da localização do aparelho requer uma API com HTTPS. Você pode continuar consultando a previsão ou escolher um município.",
       );
       return;
@@ -98,18 +109,6 @@ export default function HomeScreen({ navigation }: any) {
     fetchRecommendation(payload);
   };
 
-  useEffect(() => {
-    if (data) {
-      Alert.alert("Análise Concluída", `Status: ${data.recommendation_status}`);
-    }
-  }, [data]);
-
-  useEffect(() => {
-    if (error) {
-      Alert.alert("Aviso Científico", error);
-    }
-  }, [error]);
-
   return (
     <LinearGradient
       colors={["#6B8033", "#405B3A", "#243D51"]}
@@ -120,18 +119,36 @@ export default function HomeScreen({ navigation }: any) {
       <SafeAreaView style={{ flex: 1, backgroundColor: "transparent" }}>
         <StatusBar barStyle="light-content" />
         <ScrollView
+          style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
           <TopBar
-            location={weatherLocation?.label ?? "Município"}
+            location={
+              weatherLocation?.origin === "gps"
+                ? t("Localização aproximada")
+                : (weatherLocation?.label ?? t("Município"))
+            }
             cropType={selectedCrop}
+            onProfilePress={() => navigation.navigate("Profile")}
+            onSettingsPress={() => setPanel("settings")}
+            onTermsPress={() => setPanel("terms")}
+            onLogoutPress={() => setPanel("logout")}
             onLocationPress={chooseMunicipality}
             onCropPress={() => setIsSheetVisible(true)}
           />
 
           <View style={styles.clockContainer}>
-            <CropClockWidget />
+            <CropClockWidget
+              crop={selectedCrop}
+              calendar={calendar.calendar}
+              window={calendar.window}
+              loading={calendar.loading}
+              error={calendar.error}
+              hasLocation={!!weatherLocation}
+              onSelectWindow={calendar.selectWindow}
+              onRetry={calendar.retry}
+            />
           </View>
 
           <View style={styles.weatherContainer}>
@@ -149,13 +166,19 @@ export default function HomeScreen({ navigation }: any) {
           </View>
 
           <ActionCards
-            onAnalyzePress={handleAnalyzeNASA}
+            onSoilPress={() => setPanel("soil")}
+            onRotationsPress={() => navigation.navigate("RotationResult")}
+            onAnalyzePress={() => setPanel("risk")}
             isLoading={loading || isLoadingLocation}
           />
         </ScrollView>
 
         <View style={styles.footer}>
-          <TouchableOpacity onPress={() => navigation.navigate("ChatAgent")}>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={t("Como posso te ajudar hoje?")}
+            onPress={() => navigation.navigate("ChatAgent")}
+          >
             <ChatBotInput />
           </TouchableOpacity>
           <View style={styles.footerActions}>
@@ -164,18 +187,28 @@ export default function HomeScreen({ navigation }: any) {
               onPress={() => navigation.navigate("Camera")}
               accessibilityRole="button"
             >
-              <Text style={styles.cameraButtonText}>Diagnóstico da folha</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.profileButton}
-              onPress={() => navigation.navigate("Profile")}
-              accessibilityRole="button"
-            >
-              <Text style={styles.cameraButtonText}>Meu Perfil</Text>
+              <Text style={styles.cameraButtonText}>
+                {t("Diagnóstico da folha")}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
 
+        <HomeSheets
+          panel={panel}
+          onClose={() => setPanel(null)}
+          onLogout={onEndSession}
+          onAnalyze={handleAnalyzeNASA}
+          onChooseLocation={chooseMunicipality}
+          hasLocation={!!weatherLocation}
+          location={weatherLocation?.label ?? t("Município")}
+          crop={selectedCrop}
+          loading={loading}
+          analysis={analysisContext === analysisKey ? data : null}
+          error={
+            analysisContext === analysisKey ? analysisError || error : null
+          }
+        />
         <CropSelectionSheet
           visible={isSheetVisible}
           onClose={() => setIsSheetVisible(false)}
@@ -196,10 +229,11 @@ export default function HomeScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  scroll: { flex: 1 },
   weatherContainer: { alignItems: "center", marginBottom: 20 },
   scrollContent: {
     padding: 16,
-    paddingBottom: 130,
+    paddingBottom: 24,
   },
   clockContainer: {
     alignItems: "center",
@@ -207,10 +241,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   footer: {
-    position: "absolute",
-    bottom: 40,
-    left: 16,
-    right: 16,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 16,
     gap: 10,
   },
   footerActions: {

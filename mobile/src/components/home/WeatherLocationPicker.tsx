@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { searchWeatherCities } from "../../services/weatherApi";
 import type { WeatherLocation } from "../../types/weather";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 type Props = {
   visible: boolean;
@@ -24,6 +25,7 @@ export default function WeatherLocationPicker({
   onClose,
   onSelect,
 }: Props) {
+  const { t } = useLanguage();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<WeatherLocation[]>([]);
   const [loading, setLoading] = useState(false);
@@ -88,28 +90,30 @@ export default function WeatherLocationPicker({
             contentContainerStyle={styles.content}
           >
             <Text accessibilityRole="header" style={styles.title}>
-              Escolher município
+              {t("Escolher município")}
             </Text>
             <Text style={styles.body}>
-              Buscamos pelo nome do município, sem usar GPS. Não informe
-              endereço, nome da propriedade ou dados pessoais.
+              {t(
+                "Buscamos pelo nome do município, sem usar GPS. Não informe endereço, nome da propriedade ou dados pessoais.",
+              )}
             </Text>
             <Text style={styles.body}>
-              Ao buscar, a Open-Meteo recebe o texto digitado e o IP da conexão.
-              Ao selecionar um resultado, consultamos a previsão com coordenadas
-              aproximadas do município.
+              {t(
+                "Ao buscar, a Open-Meteo recebe o texto digitado e o IP da conexão. Ao selecionar um resultado, consultamos a previsão com coordenadas aproximadas do município.",
+              )}
             </Text>
             <Text style={styles.body}>
-              A escolha fica apenas nesta sessão do app.
+              {t("A escolha fica apenas nesta sessão do app.")}
             </Text>
             <Text style={styles.body}>
-              Busca mundial. Para distinguir nomes iguais, acrescente o estado
-              ou país: Paris, França. Até 20 resultados por busca, conforme a
-              base GeoNames.
+              {t(
+                "Busca mundial. Para distinguir nomes iguais, acrescente o estado ou país: Paris, França. Até 20 resultados por busca, conforme a base GeoNames.",
+              )}
             </Text>
             <Text style={styles.body}>
-              A Open-Meteo informa que registros do serviço podem conter
-              coordenadas e são excluídos após 90 dias.
+              {t(
+                "A Open-Meteo informa que registros do serviço podem conter coordenadas e são excluídos após 90 dias.",
+              )}
             </Text>
             <View style={styles.sources}>
               <Pressable
@@ -121,7 +125,7 @@ export default function WeatherLocationPicker({
                   );
                 }}
               >
-                <Text style={styles.hint}>Localidades: GeoNames</Text>
+                <Text style={styles.hint}>{t("Localidades: GeoNames")}</Text>
               </Pressable>
               <Pressable
                 accessibilityRole="link"
@@ -132,7 +136,7 @@ export default function WeatherLocationPicker({
                   ).catch(() => setMessage("Não foi possível abrir o link."));
                 }}
               >
-                <Text style={styles.hint}>Busca: Open-Meteo</Text>
+                <Text style={styles.hint}>{t("Busca: Open-Meteo")}</Text>
               </Pressable>
               <Pressable
                 accessibilityRole="link"
@@ -143,12 +147,12 @@ export default function WeatherLocationPicker({
                   ).catch(() => setMessage("Não foi possível abrir o link."));
                 }}
               >
-                <Text style={styles.hint}>Política de privacidade</Text>
+                <Text style={styles.hint}>{t("Política de privacidade")}</Text>
               </Pressable>
             </View>
             <TextInput
-              accessibilityLabel="Nome do município"
-              placeholder="Ex.: Recife ou Paris, França"
+              accessibilityLabel={t("Nome do município")}
+              placeholder={t("Ex.: Recife ou Paris, França")}
               placeholderTextColor="#aabbac"
               value={query}
               onChangeText={changeQuery}
@@ -168,24 +172,24 @@ export default function WeatherLocationPicker({
                 (loading || query.trim().length < 2) && styles.disabled,
               ]}
             >
-              <Text style={styles.buttonText}>Buscar município</Text>
+              <Text style={styles.buttonText}>{t("Buscar município")}</Text>
             </Pressable>
             {loading && (
               <ActivityIndicator
-                accessibilityLabel="Buscando municípios"
+                accessibilityLabel={t("Buscando municípios")}
                 color="#f4d67d"
               />
             )}
             {!!message && (
               <Text accessibilityLiveRegion="polite" style={styles.body}>
-                {message}
+                {t(message)}
               </Text>
             )}
             {results.map((location, index) => (
               <Pressable
                 key={`${location.latitude}:${location.longitude}:${index}`}
                 accessibilityRole="button"
-                accessibilityLabel={`Consultar previsão para ${location.label}`}
+                accessibilityLabel={`${t("Consultar previsão para")} ${location.label}`}
                 onPress={() => {
                   close();
                   onSelect(location);
@@ -194,7 +198,7 @@ export default function WeatherLocationPicker({
               >
                 <Text style={styles.body}>{location.label}</Text>
                 <Text style={styles.hint}>
-                  Selecionar e consultar previsão →
+                  {t("Selecionar e consultar previsão →")}
                 </Text>
               </Pressable>
             ))}
@@ -203,7 +207,7 @@ export default function WeatherLocationPicker({
               onPress={close}
               style={styles.close}
             >
-              <Text style={styles.body}>Voltar</Text>
+              <Text style={styles.body}>{t("Voltar")}</Text>
             </Pressable>
           </ScrollView>
         </View>
