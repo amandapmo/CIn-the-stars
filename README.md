@@ -164,12 +164,12 @@ Contributions below reflect the tracked code and Git history, merged feature wor
 
 | Team member | Contributions |
 | --- | --- |
-| **José Arthur** (`Jose Arthur` / `José Arthur`) | Built the mobile Home-screen interface, gradient/SVG presentation, and navigation integration; implemented the crop-rotation engine matrix and cold-tolerance logic. |
+| **José Arthur** (`Jose Arthur` / `José Arthur`) | Built the mobile Home-screen interface, gradient/SVG presentation, and navigation integration; implemented the crop-rotation engine matrix, NASA POWER climate integration, and cold-tolerance logic. |
 | **Mateus Costa** (`Mateus Costa` / `Costa2208`) | Implemented the FastAPI backend structure and Google Weather API integration, including request normalization and tests; contributed to integration of the mobile and service modules. |
 | **Amanda Pereira Muniz de Oliveira** (`amandapmo`) | Led repository coordination and pull-request integration across the AI-agent, rotation-engine, and camera/vision work; contributed to the mobile profile and navigation experience and project documentation. |
 | **Pedro Amaral** (`Pedro Amaral`) | Authored Home-screen UI work and weather/location features, including location handling, weather service/UI changes, and related tests and documentation, as evidenced by his commit history. |
-| **Jean Pietro Lacerda** (`Jean Pietro` / `Jean Lacerda`) | Developed the computer-vision and plant-analysis work: PlantVillage preparation/auditing, YOLOv8 classification training/evaluation scripts, and visual-symptom context for the AI-agent experiment. |
-| **Vyvian** | Prototyped the project end-to-end and led its design, helping shape the overall visual direction and user experience. Her prototyping and design work made a significant contribution to the team and the project. |
+| **Jean Pietro Lacerda** (`Jean Pietro` / `Jean Lacerda`) | Developed the computer-vision and plant-analysis pipeline, including PlantVillage dataset preparation and auditing, YOLOv8 classification training and evaluation, and an agentic AI architecture with tool calling, integrating visual-symptom analysis, Groq/LangGraph agents, and Browser Search for context-aware interpretation and decision support.|
+| **Vyvian** | Prototyped the entire project end-to-end to ensure the best UX/UI design and helped select the tech stack for the project's architecture. Her active work across both front-end and back-end development was essential to bringing the application to life. |
 
 ## Integration status and limitations
 
