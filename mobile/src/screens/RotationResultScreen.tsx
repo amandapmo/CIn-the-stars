@@ -1,12 +1,8 @@
 import React, { useEffect, useState } from "react";
-import {
-  SafeAreaView,
-  ScrollView,
-  View,
-  Text,
-  Pressable,
-  StyleSheet,
-} from "react-native";
+import { ScrollView, View, Text, Pressable, StyleSheet } from "react-native";
+
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useLanguage } from "../i18n/LanguageContext";
 
 import { scenarios } from "../mocks/recommendationMock";
 import { getCurrentWeather } from "../services/weatherApi";
@@ -24,7 +20,8 @@ type FailedWeatherState = {
   status: "error";
 };
 
-export default function RotationResultScreen() {
+export default function RotationResultScreen({ navigation }: any) {
+  const { locale, t } = useLanguage();
   const [selected, setSelected] = useState<ScenarioId>("A");
   const [loadedWeather, setLoadedWeather] = useState<
     LoadedWeatherState | FailedWeatherState | null
@@ -80,24 +77,36 @@ export default function RotationResultScreen() {
   const formatWeatherValue = (
     value: number | null | undefined,
     suffix: string,
-  ) => (value == null ? "Unavailable" : `${value}${suffix}`);
+  ) =>
+    value == null
+      ? t("Indisponível")
+      : `${value.toLocaleString(locale)}${suffix}`;
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t("Voltar")}
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <Text style={styles.backText}>← {t("Voltar")}</Text>
+        </Pressable>
         <Text style={styles.brand}>CIn the Stars</Text>
-        <Text style={styles.title}>Rotation Scenarios</Text>
-
+        <Text style={styles.title}>{t("Cenários de rotação")}</Text>
         <Text style={styles.demo}>
-          DEMONSTRATION — Example results, not live model output
+          {t(
+            "DEMONSTRAÇÃO — Resultados de exemplo, não saídas atuais do modelo",
+          )}
         </Text>
-
         <View style={styles.selector}>
           {(["A", "B"] as const).map((id) => (
             <Pressable
               key={id}
               accessibilityRole="button"
               accessibilityState={{ selected: selected === id }}
+              aria-pressed={selected === id}
               style={[
                 styles.selectorButton,
                 selected === id && styles.activeButton,
@@ -110,105 +119,123 @@ export default function RotationResultScreen() {
                   selected === id && styles.activeText,
                 ]}
               >
-                Scenario {id}
+                {t("Cenário")} {id}
               </Text>
             </Pressable>
           ))}
         </View>
-
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Current Weather</Text>
+          <Text style={styles.sectionTitle}>{t("Tempo atual")}</Text>
           {weatherStatus === "loading" && (
-            <Text style={styles.body}>Loading current weather...</Text>
+            <Text style={styles.body}>{t("Carregando o tempo atual...")}</Text>
           )}
           {weatherStatus === "error" && (
             <Text style={styles.body}>
-              Current weather is temporarily unavailable. Check your connection
-              and weather service configuration.
+              {t(
+                "O tempo atual está temporariamente indisponível. Confira a conexão e a configuração do serviço de clima.",
+              )}
             </Text>
           )}
           {weatherStatus === "ready" && weather && (
             <>
               <Text style={styles.body}>
-                Temperature: {formatWeatherValue(weather.temperature_c, "°C")}
+                {t("Temperatura:")}{" "}
+                {formatWeatherValue(weather.temperature_c, "°C")}
               </Text>
               <Text style={styles.body}>
-                Feels like: {formatWeatherValue(weather.feels_like_c, "°C")}
+                {t("Sensação térmica:")}{" "}
+                {formatWeatherValue(weather.feels_like_c, "°C")}
               </Text>
               <Text style={styles.body}>
-                Humidity: {formatWeatherValue(weather.humidity_percent, "%")}
+                {t("Umidade:")}{" "}
+                {formatWeatherValue(weather.humidity_percent, "%")}
               </Text>
               <Text style={styles.body}>
-                Condition: {weather.condition ?? "Unavailable"}
+                {t("Condição:")}{" "}
+                {weather.condition ? t(weather.condition) : t("Indisponível")}
               </Text>
               <Text style={styles.body}>
-                Precipitation probability:{" "}
+                {t("Probabilidade de precipitação:")}{" "}
                 {formatWeatherValue(
                   weather.precipitation_probability_percent,
                   "%",
                 )}
               </Text>
               <Text style={styles.body}>
-                Precipitation (last hour):{" "}
+                {t("Precipitação na última hora:")}{" "}
                 {formatWeatherValue(weather.precipitation_mm, " mm")}
               </Text>
               <Text style={styles.body}>
-                Wind speed: {formatWeatherValue(weather.wind_speed_kmh, " km/h")}
+                {t("Velocidade do vento:")}{" "}
+                {formatWeatherValue(weather.wind_speed_kmh, " km/h")}
               </Text>
               <Text style={styles.body}>
-                Observed at (UTC): {weather.observed_at ?? "Unavailable"}
+                {t("Observado em (UTC):")}{" "}
+                {weather.observed_at &&
+                Number.isFinite(Date.parse(weather.observed_at))
+                  ? new Date(weather.observed_at).toLocaleString(locale, {
+                      timeZone: "UTC",
+                    })
+                  : t("Indisponível")}
               </Text>
               <Text style={styles.body}>
-                Time zone: {weather.time_zone_id ?? "Unavailable"}
+                {t("Fuso horário:")} {weather.time_zone_id ?? t("Indisponível")}
               </Text>
             </>
           )}
         </View>
-
         <View style={styles.card}>
-          <Text style={styles.label}>PREVIOUS CROP</Text>
-          <Text style={styles.value}>{scenario.input.previous_crop}</Text>
-
-          <Text style={styles.label}>SUGGESTED CROP</Text>
-          <Text style={styles.crop}>{result.suggested_crop}</Text>
-
-          <Text style={styles.label}>FROST RISK</Text>
+          <Text style={styles.label}>{t("CULTURA ANTERIOR")}</Text>
+          <Text style={styles.value}>{t(scenario.input.previous_crop)}</Text>
+          <Text style={styles.label}>{t("CULTURA SUGERIDA")}</Text>
+          <Text style={styles.crop}>{t(result.suggested_crop)}</Text>
+          <Text style={styles.label}>{t("RISCO DE GEADA")}</Text>
           <Text
             style={[styles.risk, { color: isHighRisk ? "#B91C1C" : "#166534" }]}
           >
-            {result.frost_risk}
+            {t(isHighRisk ? "Alto" : "Nenhum")}
           </Text>
-
           {isFallow && (
             <Text style={styles.warning}>
-              No planting recommended in this demonstration.
+              {t("Nenhum plantio recomendado nesta demonstração.")}
             </Text>
           )}
         </View>
-
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Agronomic Justification</Text>
-          <Text style={styles.body}>{result.justification}</Text>
-        </View>
-
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Scenario Inputs</Text>
-          <Text style={styles.body}>Latitude: {scenario.input.lat}</Text>
-          <Text style={styles.body}>Longitude: {scenario.input.lon}</Text>
-          <Text style={styles.body}>
-            Planting month: {scenario.input.planting_month}
+          <Text style={styles.sectionTitle}>
+            {t("Justificativa agronômica")}
           </Text>
+          <Text style={styles.body}>{t(result.justification)}</Text>
         </View>
-
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Criteria and Limitations</Text>
+          <Text style={styles.sectionTitle}>{t("Entradas do cenário")}</Text>
           <Text style={styles.body}>
-            Displayed criteria: previous crop, suggested crop, frost risk and
-            model justification.
+            {t("Latitude:")}{" "}
+            {scenario.input.lat.toLocaleString(locale, {
+              maximumFractionDigits: 4,
+            })}
           </Text>
           <Text style={styles.body}>
-            No yield, profit or comparative ranking is provided by the current
-            API contract.
+            {t("Longitude:")}{" "}
+            {scenario.input.lon.toLocaleString(locale, {
+              maximumFractionDigits: 4,
+            })}
+          </Text>
+          <Text style={styles.body}>
+            {t("Mês de plantio:")} {scenario.input.planting_month}
+          </Text>
+        </View>
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>{t("Critérios e limitações")}</Text>
+          <Text style={styles.body}>
+            {t(
+              "Critérios exibidos: cultura anterior, cultura sugerida, risco de geada e justificativa do modelo.",
+            )}
+          </Text>
+          <Text style={styles.body}>
+            {t(
+              "O contrato atual da API não fornece produtividade, lucro ou classificação comparativa.",
+            )}
           </Text>
         </View>
       </ScrollView>
@@ -217,6 +244,12 @@ export default function RotationResultScreen() {
 }
 
 const styles = StyleSheet.create({
+  backButton: {
+    alignSelf: "flex-start",
+    paddingVertical: 10,
+    marginBottom: 12,
+  },
+  backText: { color: "#173D2A", fontSize: 16, fontWeight: "600" },
   container: {
     flex: 1,
     backgroundColor: "#F3F7F1",

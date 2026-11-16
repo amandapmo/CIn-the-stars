@@ -42,3 +42,13 @@ Zippenfenig, P. (2023). *Open-Meteo.com Weather API* [Computer software]. Zenodo
 Navarro, E. de A. (n.d.). *Curso breve de tupi antigo em dez lições: Com base nos nomes de origem tupi da geografia e do português do Brasil* [Course material]. https://www.filologia.org.br/xvii_cnlf/trab_completos/Curso%20breve%20de%20tupi%20antigo.pdf
 
 Universidade de São Paulo. (n.d.). *Sobre*. Tupi Antigo e Língua Geral (Nheengatu). Retrieved November 15, 2026, from https://tupi.fflch.usp.br/
+
+## International Planting Calendar and Reverse Geocoding
+
+Food and Agriculture Organization of the United Nations. (n.d.). *Crop Calendar*. https://cropcalendar.apps.fao.org/
+
+Food and Agriculture Organization of the United Nations. (n.d.). *Crop Calendar API*. https://api-cropcalendar.apps.fao.org/
+
+OpenStreetMap Foundation. (n.d.). *Nominatim usage policy*. https://operations.osmfoundation.org/policies/nominatim/
+
+OpenStreetMap contributors. (n.d.). *Copyright and license*. https://www.openstreetmap.org/copyright

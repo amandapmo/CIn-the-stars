@@ -3,6 +3,8 @@ export type WeatherLocation = {
   latitude: number;
   longitude: number;
   origin: "city" | "gps" | "demo";
+  countryCode?: string;
+  adminRegion?: string;
 };
 
 export type WeatherDay = {

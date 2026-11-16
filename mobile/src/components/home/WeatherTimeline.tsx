@@ -12,6 +12,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import type { WeatherState } from "../../hooks/useWeatherForecast";
 import type { WeatherDay, WeatherLocation } from "../../types/weather";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 const DEMO: WeatherLocation = {
   label: "Recife, PE",
@@ -41,12 +42,13 @@ const temperature = (value: number | null) =>
   value === null ? "—" : `${Math.round(value)}°C`;
 
 function Day({ day, width }: { day: WeatherDay; width: number }) {
+  const { locale, t } = useLanguage();
   const date = new Date(`${day.date}T12:00:00Z`);
-  const weekday = date.toLocaleDateString("pt-BR", {
+  const weekday = date.toLocaleDateString(locale, {
     weekday: "short",
     timeZone: "UTC",
   });
-  const displayDate = date.toLocaleDateString("pt-BR", {
+  const displayDate = date.toLocaleDateString(locale, {
     day: "2-digit",
     month: "2-digit",
     timeZone: "UTC",
@@ -56,7 +58,7 @@ function Day({ day, width }: { day: WeatherDay; width: number }) {
     <View
       style={[styles.day, { width }]}
       accessible
-      accessibilityLabel={`${weekday}, ${displayDate}. ${weather.label}. Máxima ${temperature(day.temperatureMax)}, mínima ${temperature(day.temperatureMin)}. Probabilidade de precipitação ${day.precipitationProbability === null ? "indisponível" : day.precipitationProbability + "%"}. Precipitação prevista ${day.precipitationMm === null ? "indisponível" : day.precipitationMm + " milímetros"}.`}
+      accessibilityLabel={`${weekday}, ${displayDate}. ${t(weather.label)}. ${t("Máxima")} ${temperature(day.temperatureMax)}, ${t("mínima")} ${temperature(day.temperatureMin)}. ${t("Probabilidade de precipitação")} ${day.precipitationProbability === null ? t("indisponível") : day.precipitationProbability.toLocaleString(locale) + "%"}. ${t("Precipitação prevista")} ${day.precipitationMm === null ? t("indisponível") : day.precipitationMm.toLocaleString(locale) + " " + t("milímetros")}.`}
     >
       <Text maxFontSizeMultiplier={1.6} style={styles.dayTitle}>
         {weekday}
@@ -99,6 +101,7 @@ export default function WeatherTimeline({
   isLoadingLocation: boolean;
   locationError: string | null;
 }) {
+  const { locale, t } = useLanguage();
   const { fontScale } = useWindowDimensions();
   const [linkError, setLinkError] = useState("");
   const location =
@@ -128,26 +131,33 @@ export default function WeatherTimeline({
     >
       <View style={styles.heading}>
         <Text accessibilityRole="header" style={styles.title}>
-          Previsão do tempo
+          {t("Previsão do tempo")}
         </Text>
         {state.status === "success" && (
-          <Text style={styles.caption}>{state.forecast.days.length} dias</Text>
+          <Text style={styles.caption}>
+            {state.forecast.days.length} {t("dias")}
+          </Text>
         )}
       </View>
       {location && (
         <Text style={styles.caption}>
-          {location.label}
-          {location.origin === "demo" ? " · demonstração" : ""}
+          {location.origin === "gps"
+            ? t("Localização aproximada")
+            : location.label}
+          {location.origin === "demo" ? ` · ${t("demonstração")}` : ""}
         </Text>
       )}
       {state.status === "idle" && (
         <>
           <Text style={styles.caption}>
-            Escolha seu município ou use a localização aproximada do aparelho.
+            {t(
+              "Escolha seu município ou use a localização aproximada do aparelho.",
+            )}
           </Text>
           <Text style={styles.privacy}>
-            A Open-Meteo recebe o município pesquisado, coordenadas aproximadas
-            e o IP da conexão. Sua escolha fica apenas nesta sessão do app.
+            {t(
+              "A Open-Meteo recebe o município pesquisado, coordenadas aproximadas e o IP da conexão. Sua escolha fica apenas nesta sessão do app.",
+            )}
           </Text>
         </>
       )}
@@ -155,17 +165,17 @@ export default function WeatherTimeline({
         <View style={styles.loading}>
           <ActivityIndicator
             color="#f4d67d"
-            accessibilityLabel="Carregando previsão"
+            accessibilityLabel={t("Carregando previsão")}
           />
           <Text accessibilityLiveRegion="polite" style={styles.caption}>
-            Consultando previsão…
+            {t("Consultando previsão…")}
           </Text>
         </View>
       )}
       {state.status === "error" && (
         <>
           <Text accessibilityRole="alert" style={styles.caption}>
-            {state.message}
+            {t(state.message)}
           </Text>
           {state.location && (
             <Pressable
@@ -175,7 +185,7 @@ export default function WeatherTimeline({
               }}
               style={styles.button}
             >
-              <Text style={styles.buttonLabel}>Tentar novamente</Text>
+              <Text style={styles.buttonLabel}>{t("Tentar novamente")}</Text>
             </Pressable>
           )}
         </>
@@ -196,11 +206,11 @@ export default function WeatherTimeline({
             ))}
           </ScrollView>
           <Text style={styles.small}>
-            Máxima / mínima · probabilidade de precipitação · deslize →
+            {t("Máxima / mínima · probabilidade de precipitação · deslize →")}
           </Text>
           <Text style={styles.small}>
-            Consultado em{" "}
-            {new Date(state.forecast.retrievedAt).toLocaleString("pt-BR", {
+            {t("Consultado em")}{" "}
+            {new Date(state.forecast.retrievedAt).toLocaleString(locale, {
               timeZone: state.forecast.timezone,
             })}{" "}
             ({state.forecast.timezone})
@@ -210,19 +220,24 @@ export default function WeatherTimeline({
             onPress={() => onLoad(state.forecast.location)}
             style={styles.secondary}
           >
-            <Text style={styles.link}>Atualizar previsão</Text>
+            <Text style={styles.link}>{t("Atualizar previsão")}</Text>
           </Pressable>
         </>
       )}
       <Text style={styles.privacy}>
-        A localização do aparelho só é solicitada ao tocar no botão e permitir o
-        acesso. Usamos coordenadas aproximadas, mantidas só nesta sessão do app.
-        A posição só muda quando você solicitar novamente. O provedor informa
-        retenção de registros por até 90 dias.
+        {t(
+          "A localização do aparelho só é solicitada ao tocar no botão e permitir o acesso. Usamos coordenadas aproximadas, mantidas só nesta sessão do app. A posição só muda quando você solicitar novamente. O provedor informa retenção de registros por até 90 dias.",
+        )}
       </Text>
       <Text style={styles.privacy}>
-        Se você pedir a análise agrícola, esse ponto aproximado também será
-        enviado à API do projeto, com conexão HTTPS.
+        {t(
+          "Se você pedir a análise agrícola, esse ponto aproximado também será enviado à API do projeto, com conexão HTTPS.",
+        )}
+      </Text>
+      <Text style={styles.privacy}>
+        {t(
+          "O calendário usa o país e a região. Quando essas informações faltarem, o servidor consulta a localização aproximada no Nominatim/OpenStreetMap e mantém o resultado por até uma hora. A FAO recebe apenas o país consultado.",
+        )}
       </Text>
       <Pressable
         accessibilityRole="button"
@@ -233,18 +248,18 @@ export default function WeatherTimeline({
         {isLoadingLocation && (
           <ActivityIndicator
             color="#f4d67d"
-            accessibilityLabel="Obtendo localização aproximada"
+            accessibilityLabel={t("Obtendo localização aproximada")}
           />
         )}
         <Text style={styles.link}>
           {isLoadingLocation
-            ? "Obtendo localização…"
-            : "Usar minha localização aproximada"}
+            ? t("Obtendo localização…")
+            : t("Usar minha localização aproximada")}
         </Text>
       </Pressable>
       {!!locationError && (
         <Text accessibilityRole="alert" style={styles.caption}>
-          {locationError}
+          {t(locationError)}
         </Text>
       )}
       <Pressable
@@ -253,7 +268,7 @@ export default function WeatherTimeline({
         style={styles.button}
       >
         <Text style={styles.buttonLabel}>
-          {location ? "Trocar município" : "Escolher município"}
+          {t(location ? "Trocar município" : "Escolher município")}
         </Text>
       </Pressable>
       {state.status === "idle" && (
@@ -262,7 +277,9 @@ export default function WeatherTimeline({
           onPress={() => selectLocation(DEMO)}
           style={styles.secondary}
         >
-          <Text style={styles.link}>Testar Recife, PE (demonstração)</Text>
+          <Text style={styles.link}>
+            {t("Testar Recife, PE (demonstração)")}
+          </Text>
         </Pressable>
       )}
       <View style={styles.attribution}>
@@ -271,14 +288,14 @@ export default function WeatherTimeline({
           onPress={() => openSource("https://www.geonames.org/")}
           style={styles.source}
         >
-          <Text style={styles.small}>Localidades: GeoNames</Text>
+          <Text style={styles.small}>{t("Localidades: GeoNames")}</Text>
         </Pressable>
         <Pressable
           accessibilityRole="link"
           onPress={() => openSource("https://open-meteo.com/")}
           style={styles.source}
         >
-          <Text style={styles.small}>Dados: Open-Meteo</Text>
+          <Text style={styles.small}>{t("Dados: Open-Meteo")}</Text>
         </Pressable>
         <Pressable
           accessibilityRole="link"
@@ -294,12 +311,12 @@ export default function WeatherTimeline({
           onPress={() => openSource("https://open-meteo.com/en/terms#privacy")}
           style={styles.source}
         >
-          <Text style={styles.small}>Privacidade do serviço</Text>
+          <Text style={styles.small}>{t("Privacidade do serviço")}</Text>
         </Pressable>
       </View>
       {!!linkError && (
         <Text accessibilityLiveRegion="polite" style={styles.caption}>
-          {linkError}
+          {t(linkError)}
         </Text>
       )}
     </LinearGradient>
