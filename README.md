@@ -160,7 +160,7 @@ Open the app with Expo Go or a configured simulator. `localhost` on a physical p
 
 ## Team contributions
 
-Contributions below are summarized from the tracked code and Git history, including author aliases and merged feature work.
+Contributions below reflect the tracked code and Git history, merged feature work, and team-reported design and prototyping contributions.
 
 | Team member | Contributions |
 | --- | --- |
@@ -169,6 +169,7 @@ Contributions below are summarized from the tracked code and Git history, includ
 | **Amanda Pereira Muniz de Oliveira** (`amandapmo`) | Led repository coordination and pull-request integration across the AI-agent, rotation-engine, and camera/vision work; contributed to the mobile profile and navigation experience and project documentation. |
 | **Pedro Amaral** (`Pedro Amaral`) | Authored Home-screen UI work and weather/location features, including location handling, weather service/UI changes, and related tests and documentation, as evidenced by his commit history. |
 | **Jean Pietro Lacerda** (`Jean Pietro` / `Jean Lacerda`) | Developed the computer-vision and plant-analysis work: PlantVillage preparation/auditing, YOLOv8 classification training/evaluation scripts, and visual-symptom context for the AI-agent experiment. |
+| **Vyvian** | Prototyped the project end-to-end and led its design, helping shape the overall visual direction and user experience. Her prototyping and design work made a significant contribution to the team and the project. |
 
 ## Integration status and limitations
 
